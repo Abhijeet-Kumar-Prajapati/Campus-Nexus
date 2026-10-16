@@ -1,0 +1,553 @@
+// ============================================================================
+//  CAMPUS NEXUS · application shell — navigation, routing, auth, global search
+// ============================================================================
+import { api } from "./api.js";
+import { icon } from "./icons.js";
+import { $, $$, on, esc, fmt, toast, openModal } from "./ui.js";
+
+import { dashboardView }  from "./views/dashboard.js";
+import { libraryView }    from "./views/library.js";
+import { storeView }      from "./views/store.js";
+import { arcadeView }     from "./views/arcade.js";
+import { securityView }   from "./views/security.js";
+
+/* --------------------------------------------------------------- state --- */
+export const state = {
+  user: null,
+  route: "dashboard",
+  theme: localStorage.getItem("cnx-theme") || "dark",
+  moduleData: {},
+  sessionExpiresAt: null,
+};
+
+const ROUTES = {
+  dashboard: { label: "Dashboard", sub: "Everything happening across campus", render: dashboardView },
+  library:   { label: "Library",   sub: "Catalogue, issue & returns",        render: libraryView },
+  store:     { label: "Store",     sub: "Inventory, billing & reports",     render: storeView },
+  arcade:    { label: "Arcade",    sub: "Play and climb the leaderboard",   render: arcadeView },
+  security:  { label: "Security",  sub: "Threat posture, limits & audit chain", render: securityView },
+};
+
+const NAV = [
+  { group: "Workspace", items: ["dashboard"] },
+  { group: "Modules",   items: ["library", "store", "arcade"] },
+  { group: "Platform",  items: ["security"] },
+];
+
+/* ------------------------------------------------------------ rendering -- */
+function shell() {
+  document.body.innerHTML = `
+    <div class="app" id="app"></div>
+    <div class="toasts"></div>`;
+  document.documentElement.dataset.theme = state.theme;
+
+  const navHtml = NAV.map((g) => `
+    <div class="nav-group">
+      <div class="nav-label">${g.group}</div>
+      ${g.items.map((k) => `
+        <a class="nav-item" data-route="${k}" href="#/${k}">
+          ${icon(k)}
+          <span>${ROUTES[k].label}</span>
+          <span class="count" data-count="${k}" hidden></span>
+        </a>`).join("")}
+    </div>`).join("");
+
+  $("#app").innerHTML = `
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">${icon("logo")}</div>
+        <div class="brand-text">
+          <h1>Campus Nexus</h1>
+          <p>Library · Store · Arcade</p>
+        </div>
+      </div>
+      <nav>${navHtml}</nav>
+      <div class="sidebar-foot">
+        <div class="user-chip" id="userChip"></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn" id="menuBtn" aria-label="Menu" style="display:none">${icon("menu")}</button>
+        <div class="page-title">
+          <h2 id="pageTitle">Dashboard</h2>
+          <p id="pageSub">Everything happening across campus</p>
+        </div>
+
+        <div class="searchbox" id="searchbox">
+          ${icon("search")}
+          <input id="globalSearch" type="search" placeholder="Search books, products, bills…"
+                 autocomplete="off" aria-label="Global search">
+          <div class="search-results" id="searchResults" hidden></div>
+        </div>
+
+        <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme"></button>
+        <button class="icon-btn" id="loginBtn" title="Account"></button>
+      </header>
+      <div class="content" id="content"></div>
+    </main>`;
+
+  paintThemeBtn();
+  paintUserChip();
+  bindShell();
+}
+
+function paintThemeBtn() {
+  const btn = $("#themeBtn");
+  btn.innerHTML = state.theme === "dark" ? icon("sun") : icon("moon");
+}
+
+function paintUserChip() {
+  const chip = $("#userChip");
+  if (!chip) return;
+  if (!state.user) {
+    chip.innerHTML = `
+      <div class="avatar" style="background:linear-gradient(135deg,var(--text-faint),var(--text-dim))">?</div>
+      <div class="meta">
+        <strong>Guest mode</strong>
+        <span>read-only</span>
+      </div>
+      <button class="btn btn-sm btn-primary" id="chipLogin" style="margin-left:auto">Sign in</button>`;
+    $("#chipLogin")?.addEventListener("click", showLogin);
+    return;
+  }
+  chip.innerHTML = `
+    <div class="avatar">${esc(fmt.initials(state.user.full_name))}</div>
+    <div class="meta">
+      <strong>${esc(state.user.full_name)}</strong>
+      <span>${esc(state.user.role)}</span>
+    </div>
+    <button class="icon-btn" id="chipOut" title="Sign out"
+            style="margin-left:auto;width:32px;height:32px;border:none;background:none">${icon("logout")}</button>`;
+  $("#chipOut").addEventListener("click", signOut);
+}
+
+/* --------------------------------------------------------------- auth ---- */
+async function signOut(quiet = false) {
+  try { await api.logout(); } catch { /* session may already be gone */ }
+  state.user = null;
+  stopIdleWatch();
+  paintUserChip();
+  paintTopbarAccount();
+  if (!quiet) toast("Signed out", "info");
+  render();
+}
+
+function paintTopbarAccount() {
+  const btn = $("#loginBtn");
+  if (!btn) return;
+  btn.innerHTML = state.user
+    ? `<span style="font-weight:700;font-size:12px">${esc(fmt.initials(state.user.full_name))}</span>`
+    : icon("users");
+}
+
+/**
+ * Sign-in modal with the anti-bot measures mirrored from the server:
+ * a hidden honeypot field (bots fill every input) and a minimum submit time.
+ */
+export function showLogin() {
+  const m = openModal({
+    title: "Sign in to Campus Nexus",
+    subtitle: "Required for issuing books, editing stock and billing",
+    body: `
+      <form id="loginForm" class="col" style="gap:14px" autocomplete="on">
+        <div class="field">
+          <label for="lgUser">Username</label>
+          <input class="input" id="lgUser" name="username" autocomplete="username"
+                 placeholder="admin" required spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="lgPass">Password</label>
+          <input class="input" id="lgPass" name="password" type="password"
+                 autocomplete="current-password" placeholder="••••••••" required>
+        </div>
+
+        <!-- Honeypot: hidden from humans, irresistible to naive bots. -->
+        <div class="hp" aria-hidden="true">
+          <label for="lgHp">Leave this field empty</label>
+          <input id="lgHp" name="email" type="text" tabindex="-1" autocomplete="off">
+        </div>
+
+        <div class="row between tiny faint">
+          <span class="row" style="gap:6px">${icon("lock")} Session bound to this browser</span>
+          <span id="lockNote" hidden style="color:var(--red)"></span>
+        </div>
+      </form>
+
+      <div class="login-demo">
+        <div class="small faint" style="margin-bottom:2px">Demo accounts — click to fill</div>
+        <button type="button" class="dbtn" data-fill="admin|admin123">
+          <span>Administrator · Priya Raghavan</span><code>admin / admin123</code></button>
+        <button type="button" class="dbtn" data-fill="staff|staff123">
+          <span>Counter staff · Dev Kumar</span><code>staff / staff123</code></button>
+      </div>`,
+    footer: `
+      <button class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" id="lgSubmit">${icon("arrowRight")} Sign in</button>`,
+  });
+
+  m.el.querySelectorAll("[data-fill]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const [u, p] = b.dataset.fill.split("|");
+      $("#lgUser", m.el).value = u;
+      $("#lgPass", m.el).value = p;
+      $("#lgPass", m.el).focus();
+    })
+  );
+
+  const btn = $("#lgSubmit", m.el);
+  const note = $("#lockNote", m.el);
+
+  const submit = async () => {
+    const username = $("#lgUser", m.el).value.trim();
+    const password = $("#lgPass", m.el).value;
+    const honeypot = $("#lgHp", m.el).value;
+    if (!username || !password) return toast("Enter both fields", "warn");
+
+    btn.disabled = true;
+    btn.innerHTML = icon("spinner") + " Verifying…";
+    note.hidden = true;
+
+    try {
+      const res = await api.login(username, password, honeypot);
+      state.user = res.user;
+      m.close();
+      paintUserChip();
+      paintTopbarAccount();
+      toast(res.message, "success", "Welcome");
+      startIdleWatch(res.session?.idleMinutes ?? 30);
+      render();
+    } catch (err) {
+      // Show the lockout countdown the server sent back, and start a client-side
+      // cooldown so the user cannot hammer the endpoint while waiting.
+      if (err.retryAfter) {
+        note.hidden = false;
+        note.textContent = `Locked — retry in ${err.retryAfter}s`;
+        startCooldown(btn, err.retryAfter);
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = icon("arrowRight") + " Sign in";
+      }
+      toast(err.message, err.status === 429 || err.status === 423 ? "warn" : "error",
+            err.status === 429 || err.status === 423 ? "Rate limited" : "Sign-in failed");
+    }
+  };
+
+  $("#lgSubmit", m.el).addEventListener("click", submit);
+  $("#loginForm", m.el).addEventListener("submit", (e) => { e.preventDefault(); submit(); });
+  setTimeout(() => $("#lgUser", m.el)?.focus(), 80);
+}
+
+/** Client-side cooldown mirroring the server lockout, so we never even try. */
+function startCooldown(btn, seconds) {
+  let left = seconds;
+  btn.disabled = true;
+  const tick = setInterval(() => {
+    left -= 1;
+    if (left <= 0) {
+      clearInterval(tick);
+      btn.disabled = false;
+      btn.innerHTML = icon("arrowRight") + " Sign in";
+    } else {
+      btn.innerHTML = icon("clock") + ` Wait ${left}s`;
+    }
+  }, 1000);
+}
+
+/* ------------------------------------------------- idle auto-sign-out ---- */
+let idleTimer = null;
+function startIdleWatch(minutes) {
+  stopIdleWatch();
+  const limitMs = (minutes ?? 30) * 60 * 1000;
+  idleTimer = setInterval(() => {
+    if (!state.user) return stopIdleWatch();
+    // Mirror of the server-side idle window so the UI never lies about it.
+    if (state.sessionExpiresAt && Date.now() >= state.sessionExpiresAt) {
+      toast("Signed out automatically after inactivity", "warn", "Session expired");
+      signOut(true);
+    }
+  }, 30_000);
+  state.sessionExpiresAt = Date.now() + limitMs;
+}
+function stopIdleWatch() {
+  if (idleTimer) clearInterval(idleTimer);
+  idleTimer = null;
+}
+
+/* ----------------------------------------------------------- navigation -- */
+export function go(route) {
+  location.hash = `#/${route}`;
+}
+
+function setActive(route) {
+  $$(".nav-item").forEach((a) => a.classList.toggle("active", a.dataset.route === route));
+  const r = ROUTES[route];
+  $("#pageTitle").textContent = r.label;
+  $("#pageSub").textContent = r.sub;
+  $("#sidebar").classList.remove("open");
+  $(".scrim")?.remove();
+}
+
+function parseHash() {
+  const key = (location.hash || "").replace(/^#\/?/, "").split("?")[0];
+  return ROUTES[key] ? key : "dashboard";
+}
+
+async function render() {
+  const route = parseHash();
+  state.route = route;
+  setActive(route);
+
+  // Give every view a brand-new container. Views bind delegated listeners to
+  // this node, so discarding it takes their listeners with it — otherwise a
+  // stale handler from a previous view would still fire on shared selectors.
+  const content = $("#content");
+  content.replaceChildren();
+  const view = document.createElement("div");
+  view.className = "view-root";
+  content.appendChild(view);
+
+  try {
+    await ROUTES[route].render(view);
+  } catch (err) {
+    console.error(err);
+    view.innerHTML = `<div class="view"><div class="card"><div class="card-body">
+      <div class="alert danger">${icon("alert")} Could not load this screen: ${esc(err.message)}</div>
+    </div></div></div>`;
+  }
+}
+
+/** Re-render the current screen after a mutation. */
+export const refresh = () => render();
+
+/** Show a count badge next to a nav item (e.g. low-stock count). */
+export function setBadge(route, value) {
+  const el = $(`[data-count="${route}"]`);
+  if (!el) return;
+  el.hidden = !value;
+  el.textContent = value;
+}
+
+/* --------------------------------------------------------- global search - */
+function bindSearch() {
+  const input = $("#globalSearch");
+  const box = $("#searchResults");
+  let timer;
+
+  const hide = () => { box.hidden = true; };
+
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    const q = input.value.trim();
+    if (q.length < 2) return hide();
+    timer = setTimeout(async () => {
+      try {
+        const res = await api.search(q);
+        const total = res.books.length + res.products.length + res.bills.length;
+        if (!total) {
+          box.innerHTML = `<div class="grp-title">No matches for “${esc(q)}”</div>`;
+        } else {
+          const group = (title, ic, rows) => rows.length
+            ? `<div class="grp-title">${title}</div>` + rows.map((r) => r).join("")
+            : "";
+          box.innerHTML =
+            group("Books", "library", res.books.map((b) =>
+              `<div class="res" data-go="library"><span>${icon("book")} ${esc(b.title)}</span><small>${esc(b.author)}</small></div>`)) +
+            group("Products", "store", res.products.map((p) =>
+              `<div class="res" data-go="store"><span>${icon("box")} ${esc(p.name)}</span><small>${fmt.money(p.price)}</small></div>`)) +
+            group("Bills", "store", res.bills.map((b) =>
+              `<div class="res" data-go="store"><span>${icon("receipt")} ${esc(b.bill_no)}</span><small>${fmt.money(b.total)}</small></div>`));
+        }
+        box.hidden = false;
+      } catch { hide(); }
+    }, 220);
+  });
+
+  box.addEventListener("click", (e) => {
+    const res = e.target.closest(".res");
+    if (!res) return;
+    go(res.dataset.go);
+    input.value = "";
+    hide();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!$("#searchbox").contains(e.target)) hide();
+  });
+}
+
+/* ---------------------------------------------------------------- shell -- */
+function bindShell() {
+  on(document, "click", ".nav-item", (e, el) => {
+    e.preventDefault();
+    go(el.dataset.route);
+  });
+
+  $("#themeBtn").addEventListener("click", () => {
+    state.theme = state.theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = state.theme;
+    localStorage.setItem("cnx-theme", state.theme);
+    paintThemeBtn();
+  });
+
+  $("#loginBtn").addEventListener("click", () => (state.user ? showAccount() : showLogin()));
+
+  $("#menuBtn").addEventListener("click", () => {
+    const sb = $("#sidebar");
+    sb.classList.toggle("open");
+    if (sb.classList.contains("open")) {
+      const scrim = document.createElement("div");
+      scrim.className = "scrim";
+      scrim.addEventListener("click", () => { sb.classList.remove("open"); scrim.remove(); });
+      document.body.appendChild(scrim);
+    } else $(".scrim")?.remove();
+  });
+
+  window.addEventListener("cnx:require-auth", showLogin);
+  bindSearch();
+}
+
+function showAccount() {
+  openModal({
+    title: state.user.full_name,
+    subtitle: state.user.role,
+    body: `
+      <div class="col" style="gap:16px">
+        <div class="alert ok">${icon("checkCircle")}
+          <span>Signed in as <strong>${esc(state.user.username)}</strong>. The session token is
+          HttpOnly, bound to this browser's IP and User-Agent, and rotates automatically.</span></div>
+
+        <div class="score-row"><span>Session idle timeout</span><strong>30 minutes</strong></div>
+        <div class="score-row"><span>Absolute session limit</span><strong>8 hours</strong></div>
+        <div class="score-row"><span>Concurrent sessions</span><strong>5 maximum</strong></div>
+        <div class="score-row"><span>CSRF protection</span><strong style="color:var(--green)">Active</strong></div>
+        <div class="score-row"><span>Rate limiting</span><strong style="color:var(--green)">Active</strong></div>
+
+        <button class="btn btn-ghost" id="accPw">${icon("key")} Change password</button>
+      </div>`,
+    footer: `
+      <button class="btn btn-ghost" id="accOut">${icon("logout")} Sign out</button>
+      <button class="btn btn-primary" data-close>Done</button>`,
+    onMount: ({ el }) => {
+      $("#accOut", el).addEventListener("click", () => signOut());
+      $("#accPw", el).addEventListener("click", () => { el.querySelector("[data-close]").click(); showChangePassword(); });
+    },
+  });
+}
+
+/* --------------------------------------------- change password + meter -- */
+function showChangePassword() {
+  const m = openModal({
+    title: "Change password",
+    subtitle: "All other sessions are signed out when you succeed",
+    body: `
+      <form id="pwForm" class="col" style="gap:14px">
+        <div class="field">
+          <label for="pwCur">Current password</label>
+          <input class="input" id="pwCur" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="field">
+          <label for="pwNew">New password</label>
+          <input class="input" id="pwNew" type="password" autocomplete="new-password" required>
+          <div class="strength" id="pwMeter" hidden>
+            <div class="bar"><i id="pwBar" style="width:0%"></i></div>
+            <div class="row between tiny" style="margin-top:5px">
+              <span id="pwLabel" class="faint">—</span>
+              <span id="pwHint" class="faint"></span>
+            </div>
+            <ul id="pwIssues" class="pw-issues"></ul>
+          </div>
+        </div>
+        <div class="field">
+          <label for="pwRep">Confirm new password</label>
+          <input class="input" id="pwRep" type="password" autocomplete="new-password" required>
+        </div>
+      </form>`,
+    footer: `
+      <button class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" id="pwSave">${icon("check")} Update password</button>`,
+  });
+
+  const next = $("#pwNew", m.el);
+  const meter = $("#pwMeter", m.el);
+  const bar = $("#pwBar", m.el);
+  const label = $("#pwLabel", m.el);
+  const hint = $("#pwHint", m.el);
+  const issues = $("#pwIssues", m.el);
+  const TONE = ["", "red", "amber", "amber", "green"];
+
+  let timer;
+  next.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const v = next.value;
+      if (!v) { meter.hidden = true; return; }
+      try {
+        const { strength } = await api.checkPassword(v);
+        meter.hidden = false;
+        bar.parentElement.className = "bar " + TONE[strength.score];
+        bar.style.width = `${(strength.score / 4) * 100}%`;
+        label.textContent = strength.label;
+        label.style.color = strength.score >= 3 ? "var(--green)" : strength.score >= 2 ? "var(--amber)" : "var(--red)";
+        hint.textContent = strength.recommended ? "Meets the recommended length" : `${v.length} characters`;
+        issues.innerHTML = strength.issues.map((i) => `<li>${esc(i)}</li>`).join("");
+      } catch { meter.hidden = true; }
+    }, 200);
+  });
+
+  $("#pwSave", m.el).addEventListener("click", async () => {
+    const current = $("#pwCur", m.el).value;
+    const value = next.value;
+    const rep = $("#pwRep", m.el).value;
+    if (value !== rep) return toast("The two new passwords do not match", "warn");
+
+    const btn = $("#pwSave", m.el);
+    btn.disabled = true;
+    btn.innerHTML = icon("spinner") + " Updating…";
+    try {
+      const res = await api.changePassword(current, value);
+      m.close();
+      toast(`${res.message} (${res.revokedSessions} session(s) revoked)`, "success", "Password changed");
+      signOut(true);
+    } catch (err) {
+      toast(err.message, "error");
+      btn.disabled = false;
+      btn.innerHTML = icon("check") + " Update password";
+    }
+  });
+}
+
+/* ----------------------------------------------------------------- boot -- */
+async function boot() {
+  shell();
+  paintTopbarAccount();
+
+  // Responsive: show the hamburger only on narrow screens.
+  const mq = window.matchMedia("(max-width: 900px)");
+  const applyMq = () => { $("#menuBtn").style.display = mq.matches ? "grid" : "none"; };
+  mq.addEventListener("change", applyMq);
+  applyMq();
+
+  try {
+    const me = await api.me();
+    state.user = me.user;
+    if (me.session) {
+      state.sessionExpiresAt = (me.session.issuedAt ?? Date.now()) + 30 * 60 * 1000;
+      startIdleWatch(30);
+    }
+  } catch { state.user = null; }
+  paintUserChip();
+
+  // A rejected CSRF token means the cookie was rotated or cleared — reload to
+  // pick up the fresh one rather than silently failing every write.
+  window.addEventListener("cnx:csrf-expired", () => {
+    toast("Security token expired — reloading", "warn");
+    setTimeout(() => location.reload(), 1200);
+  });
+
+  window.addEventListener("hashchange", render);
+  await render();
+}
+
+boot();

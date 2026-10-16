@@ -1,0 +1,290 @@
+// ============================================================================
+//  UI toolkit — formatters, toasts, modals, small DOM helpers.
+// ============================================================================
+import { icon } from "./icons.js";
+
+/* ---------------------------------------------------------- formatting --- */
+export const fmt = {
+  money(n) {
+    const v = Number(n) || 0;
+    return "₹" + v.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  },
+  money0(n) {
+    return "₹" + Math.round(Number(n) || 0).toLocaleString("en-IN");
+  },
+  num(n) {
+    return (Number(n) || 0).toLocaleString("en-IN");
+  },
+  pct(n) {
+    return `${Math.round(Number(n) || 0)}%`;
+  },
+  date(s) {
+    if (!s) return "—";
+    const d = new Date(String(s).replace(" ", "T"));
+    if (Number.isNaN(d.getTime())) return String(s);
+    return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  },
+  dateShort(s) {
+    const d = new Date(String(s).replace(" ", "T"));
+    if (Number.isNaN(d.getTime())) return String(s);
+    return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+  },
+  timeAgo(s) {
+    if (!s) return "";
+    const d = new Date(String(s).replace(" ", "T"));
+    const secs = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (secs < 60) return "just now";
+    if (secs < 3600) return `${Math.floor(secs / 60)}m ago`;
+    if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`;
+    if (secs < 604800) return `${Math.floor(secs / 86400)}d ago`;
+    return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+  },
+  dateTime(s) {
+    const d = new Date(String(s).replace(" ", "T"));
+    if (Number.isNaN(d.getTime())) return String(s);
+    return d.toLocaleString("en-IN", {
+      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: true,
+    });
+  },
+  initials(name) {
+    return String(name || "?").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  },
+};
+
+/* ------------------------------------------------------------ escaping --- */
+export function esc(v) {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+/* --------------------------------------------------------------- DOM ----- */
+export const $  = (sel, root = document) => root.querySelector(sel);
+export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+/** Delegated event binding: on(root, "click", ".btn", handler) */
+export function on(root, type, selector, handler) {
+  root.addEventListener(type, (e) => {
+    const target = e.target.closest(selector);
+    if (target && root.contains(target)) handler(e, target);
+  });
+}
+
+/** Animate a number from 0 → value. */
+export function countUp(el, value, { decimals = 0, prefix = "", suffix = "", duration = 900 } = {}) {
+  const target = Number(value) || 0;
+  const start = performance.now();
+  const tick = (now) => {
+    const p = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    const v = target * eased;
+    el.textContent = prefix + v.toLocaleString("en-IN", {
+      minimumFractionDigits: decimals, maximumFractionDigits: decimals,
+    }) + suffix;
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+/* ------------------------------------------------------------- toasts ---- */
+const TOAST_ICON = { success: "checkCircle", error: "alert", warn: "alert", info: "info" };
+
+export function toast(message, type = "success", title = "") {
+  let host = $(".toasts");
+  if (!host) {
+    host = document.createElement("div");
+    host.className = "toasts";
+    document.body.appendChild(host);
+  }
+  const el = document.createElement("div");
+  el.className = `toast ${type}`;
+  el.setAttribute("role", "status");
+  el.innerHTML = `
+    <div class="toast-icon">${icon(TOAST_ICON[type] ?? "info")}</div>
+    <div class="toast-text">
+      ${title ? `<strong>${esc(title)}</strong>` : ""}
+      <span>${esc(message)}</span>
+    </div>`;
+  host.appendChild(el);
+
+  const kill = () => {
+    el.classList.add("out");
+    setTimeout(() => el.remove(), 260);
+  };
+  setTimeout(kill, type === "error" ? 5200 : 3400);
+  el.addEventListener("click", kill);
+  return el;
+}
+
+/* ------------------------------------------------------------- modals ---- */
+/**
+ * openModal({ title, subtitle, body, footer, wide, onMount })
+ * `body` / `footer` may be HTML strings or elements. Returns { el, close }.
+ */
+export function openModal({ title, subtitle = "", body, footer = "", wide = false, onMount }) {
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="modal ${wide ? "wide" : ""}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+      <div class="modal-head">
+        <div style="flex:1;min-width:0">
+          <h3>${esc(title)}</h3>
+          ${subtitle ? `<p>${esc(subtitle)}</p>` : ""}
+        </div>
+        <button class="icon-btn" data-close aria-label="Close">${icon("x")}</button>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-foot"></div>
+    </div>`;
+
+  const bodyEl = $(".modal-body", overlay);
+  const footEl = $(".modal-foot", overlay);
+  if (typeof body === "string") bodyEl.innerHTML = body; else if (body) bodyEl.appendChild(body);
+  if (typeof footer === "string") footEl.innerHTML = footer; else if (footer) footEl.appendChild(footer);
+  if (!footEl.innerHTML.trim()) footEl.remove();
+
+  const close = () => {
+    overlay.style.animation = "fade .16s ease reverse both";
+    setTimeout(() => overlay.remove(), 150);
+    document.removeEventListener("keydown", onKey);
+  };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay || e.target.closest("[data-close]")) close();
+  });
+  document.addEventListener("keydown", onKey);
+
+  document.body.appendChild(overlay);
+  onMount?.({ el: overlay, body: bodyEl, foot: footEl, close });
+  return { el: overlay, body: bodyEl, foot: footEl, close };
+}
+
+export function confirmDialog({ title, message, confirmText = "Confirm", danger = false }) {
+  return new Promise((resolve) => {
+    const m = openModal({
+      title,
+      body: `<p class="muted" style="font-size:13.5px;line-height:1.6">${esc(message)}</p>`,
+      footer: `
+        <button class="btn btn-ghost" data-close>Cancel</button>
+        <button class="btn ${danger ? "btn-danger" : "btn-primary"}" data-confirm>${esc(confirmText)}</button>`,
+    });
+    $("[data-confirm]", m.el).addEventListener("click", () => { m.close(); resolve(true); });
+    m.el.addEventListener("click", (e) => { if (e.target === m.el || e.target.closest("[data-close]")) resolve(false); });
+  });
+}
+
+/* ------------------------------------------------------------ helpers ---- */
+export function emptyState(message, iconName = "box") {
+  return `<div class="empty">${icon(iconName)}<p>${esc(message)}</p></div>`;
+}
+
+export function skeleton(rows = 5) {
+  return `<div class="col" style="gap:10px">
+    ${Array.from({ length: rows }, (_, i) => `<div class="skeleton" style="height:${i === 0 ? 34 : 26}px;width:${100 - i * 7}%"></div>`).join("")}
+  </div>`;
+}
+
+/** Guard a write action: prompts to sign in when the API replies 401. */
+export async function withAuth(action) {
+  try {
+    return { ok: true, data: await action() };
+  } catch (err) {
+    if (err.requiresAuth) {
+      toast("You need to sign in first", "warn", "Sign-in required");
+      window.dispatchEvent(new CustomEvent("cnx:require-auth"));
+      return { ok: false };
+    }
+    toast(err.message, "error", "Could not complete");
+    return { ok: false };
+  }
+}
+
+/** Download rows as a CSV file. */
+export function downloadCSV(filename, rows) {
+  if (!rows.length) return toast("Nothing to export", "warn");
+  const headers = Object.keys(rows[0]);
+  const csv = [
+    headers.join(","),
+    ...rows.map((r) => headers.map((h) => {
+      const v = r[h];
+      const s = v === null || v === undefined ? "" : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    }).join(",")),
+  ].join("\n");
+
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast(`${rows.length} row(s) exported to ${filename}`, "success");
+}
+
+/** Minimal line/area chart drawn as SVG — no charting library needed. */
+export function lineChart(data, { height = 240, valueKey = "value", labelKey = "label" } = {}) {
+  if (!data.length) return emptyState("No data yet", "chart");
+  const W = 800, H = height, pad = { t: 16, r: 14, b: 28, l: 46 };
+  const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+
+  const max = Math.max(...data.map((d) => d[valueKey]), 1);
+  const niceMax = Math.ceil(max / 4) * 4 || 4;
+  const x = (i) => pad.l + (data.length === 1 ? iw / 2 : (i / (data.length - 1)) * iw);
+  const y = (v) => pad.t + ih - (v / niceMax) * ih;
+
+  const pts = data.map((d, i) => [x(i), y(d[valueKey])]);
+  const line = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const area = `${line} L${pts.at(-1)[0].toFixed(1)},${(pad.t + ih).toFixed(1)} L${pts[0][0].toFixed(1)},${(pad.t + ih).toFixed(1)} Z`;
+
+  const gridLines = Array.from({ length: 5 }, (_, i) => {
+    const v = (niceMax / 4) * i;
+    const yy = y(v);
+    return `<line class="grid-line" x1="${pad.l}" y1="${yy}" x2="${W - pad.r}" y2="${yy}"/>
+            <text class="axis-text" x="${pad.l - 8}" y="${yy + 3.5}" text-anchor="end">${fmt.num(Math.round(v))}</text>`;
+  }).join("");
+
+  const step = Math.ceil(data.length / 7);
+  const xLabels = data.map((d, i) =>
+    i % step === 0 || i === data.length - 1
+      ? `<text class="axis-text" x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(d[labelKey])}</text>`
+      : ""
+  ).join("");
+
+  const dots = pts.map((p, i) =>
+    `<circle class="dot" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.6" fill="var(--violet)" stroke="var(--bg)">
+       <title>${esc(data[i][labelKey])}: ${fmt.num(data[i][valueKey])}</title>
+     </circle>`
+  ).join("");
+
+  const gid = "g" + Math.random().toString(36).slice(2, 8);
+  return `
+    <svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Trend chart">
+      <defs>
+        <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--violet)" stop-opacity=".75"/>
+          <stop offset="100%" stop-color="var(--cyan)" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      ${gridLines}
+      <path class="area-path" d="${area}" fill="url(#${gid})"/>
+      <path class="line-path" d="${line}" stroke="var(--violet)"/>
+      ${dots}${xLabels}
+    </svg>`;
+}
+
+/** Horizontal ranked bars. */
+export function hbars(items, { valueKey = "value", labelKey = "label", format = fmt.num } = {}) {
+  if (!items.length) return emptyState("No data yet", "chart");
+  const max = Math.max(...items.map((i) => Number(i[valueKey]) || 0), 1);
+  return `<div class="hbar">${items.map((it) => {
+    const v = Number(it[valueKey]) || 0;
+    return `<div class="hbar-row">
+      <div>
+        <div class="lbl" title="${esc(it[labelKey])}">${esc(it[labelKey])}</div>
+        <div class="bar" style="margin-top:6px"><i style="width:${(v / max) * 100}%"></i></div>
+      </div>
+      <div class="val">${format(v)}</div>
+    </div>`;
+  }).join("")}</div>`;
+}

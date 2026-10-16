@@ -1,0 +1,37 @@
+{
+  "name": "campus-nexus",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CAMPUS NEXUS - a unified campus platform combining a Library Management System (Java Swing origin), a Shopping Mall / Billing System (Java Swing + MySQL origin) and a C-language Arcade (Number Guessing + Snake-Water-Gun).",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "build": "node scripts/build.js",
+    "serve:prod": "node server.js",
+    "test": "node scripts/smoke-test.js",
+    "test:security": "node scripts/security-test.js",
+    "test:validate": "node scripts/validate-test.js",
+    "test:crypto": "node scripts/fieldcrypto-test.js",
+    "test:pii": "node scripts/pii-scan.js",
+    "test:all": "node scripts/smoke-test.js && node scripts/security-test.js && node scripts/validate-test.js && node scripts/fieldcrypto-test.js && node scripts/pii-scan.js",
+    "reset": "node scripts/reset-db.js",
+    "unlock": "node scripts/unlock-admin.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "keywords": [
+    "library-management",
+    "billing",
+    "pos",
+    "arcade",
+    "security",
+    "rate-limiting",
+    "csrf",
+    "audit-ledger",
+    "sqlite",
+    "zero-dependency"
+  ]
+}

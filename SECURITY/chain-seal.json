@@ -1,0 +1,6 @@
+{
+  "head": "00a220a0a932a6caf1467088ac2c005c38869c6afeaaaf3895101c9a065ee3f9",
+  "height": 240,
+  "sealed_at": "2026-10-16T12:57:37.406Z",
+  "note": "External copy of the ledger head. If this disagrees with the database, the chain was rewritten wholesale."
+}

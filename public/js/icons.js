@@ -1,0 +1,57 @@
+// Inline SVG icon set (stroke-based, 24×24 viewBox).
+const P = (d, extra = "") =>
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" ${extra}>${d}</svg>`;
+
+export const icons = {
+  logo: P(`<path d="M4 7.5 12 3l8 4.5-8 4.5-8-4.5Z"/><path d="M6 10v6c0 1.5 2.7 3 6 3s6-1.5 6-3v-6"/><path d="M20 7.5V15"/>`),
+
+  dashboard: P(`<rect x="3" y="3" width="7.5" height="8.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="5.5" rx="1.6"/><rect x="13.5" y="11" width="7.5" height="10" rx="1.6"/><rect x="3" y="14" width="7.5" height="7" rx="1.6"/>`),
+  library: P(`<path d="M4 4.5h5.5v15H4z"/><path d="M9.5 4.5H15v15H9.5z"/><path d="M15 6l4.2-1.1a1 1 0 0 1 1.2.8l2.6 12.6a1 1 0 0 1-.8 1.2L18 20.6"/>`),
+  store: P(`<path d="M3.5 8.5 5 4h14l1.5 4.5"/><path d="M3.5 8.5h17V20a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1V8.5Z"/><path d="M9 21v-6h6v6"/>`),
+  arcade: P(`<rect x="2.5" y="7" width="19" height="10.5" rx="4"/><path d="M7 10.5v3M5.5 12h3"/><circle cx="16" cy="11" r=".9" fill="currentColor"/><circle cx="18.5" cy="13.5" r=".9" fill="currentColor"/>`),
+  users: P(`<circle cx="9" cy="8" r="3.2"/><path d="M2.8 20a6.2 6.2 0 0 1 12.4 0"/><path d="M16 5.3a3.2 3.2 0 0 1 0 5.9"/><path d="M17.5 14.4A6.2 6.2 0 0 1 21.2 20"/>`),
+
+  book: P(`<path d="M5 3.5h9a3 3 0 0 1 3 3v14H8a3 3 0 0 0-3 3V3.5Z"/><path d="M5 17.5"/>`),
+  books: P(`<rect x="3" y="4" width="4" height="16" rx="1"/><rect x="8.5" y="4" width="4" height="16" rx="1"/><path d="M15 4.8l4 .9-3 14.3-4-.9z"/>`),
+  box: P(`<path d="M20.5 7.5 12 3 3.5 7.5v9L12 21l8.5-4.5v-9Z"/><path d="M3.5 7.5 12 12m0 0 8.5-4.5M12 12v9"/>`),
+  cart: P(`<circle cx="9.5" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2.5 3h2.2l2.4 11.4a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.2L21 7H5.5"/>`),
+  receipt: P(`<path d="M5 2.8 6.8 4l1.8-1.2L10.4 4 12.2 2.8 14 4l1.8-1.2L17.6 4 19.4 2.8v16.4L17.6 21l-1.8-1.2L14 21l-1.8-1.2L10.4 21 8.6 19.8 6.8 21 5 19.4Z"/><path d="M8.5 8.5h7M8.5 12.5h7M8.5 16h4"/>`),
+  gamepad: P(`<path d="M7 11v4M5 13h4"/><circle cx="15.5" cy="12" r=".9" fill="currentColor"/><circle cx="18" cy="14.5" r=".9" fill="currentColor"/>`),
+  trophy: P(`<path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5.5H4.5v1A3.5 3.5 0 0 0 8 10M17 5.5h2.5v1A3.5 3.5 0 0 1 16 10"/><path d="M12 14v3.5M8.5 21h7l-.7-3.5h-5.6L8.5 21Z"/>`),
+
+  search: P(`<circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.9-4.9"/>`),
+  plus: P(`<path d="M12 5v14M5 12h14"/>`),
+  minus: P(`<path d="M5 12h14"/>`),
+  x: P(`<path d="M6 6l12 12M18 6 6 18"/>`),
+  check: P(`<path d="m4.5 12.5 5 5 10-11"/>`),
+  checkCircle: P(`<circle cx="12" cy="12" r="9"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/>`),
+  alert: P(`<path d="M12 3.5 22 20H2L12 3.5Z"/><path d="M12 9.5v4.2M12 16.8v.2"/>`),
+  info: P(`<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.8v.2"/>`),
+  logout: P(`<path d="M9.5 20H5.5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4"/><path d="m15.5 16.5 4.5-4.5-4.5-4.5"/><path d="M20 12H9"/>`),
+  sun: P(`<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/>`),
+  moon: P(`<path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z"/>`),
+  menu: P(`<path d="M4 7h16M4 12h16M4 17h16"/>`),
+  edit: P(`<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3Z"/><path d="m14.5 6.5 3 3"/>`),
+  trash: P(`<path d="M4 6.5h16M9.5 6.5V4.2h5v2.3"/><path d="M6.5 6.5 7.5 21h9l1-14.5"/><path d="M10.5 10v7M13.5 10v7"/>`),
+  refresh: P(`<path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 4.5V10H15"/>`),
+  download: P(`<path d="M12 3.5v11M7.5 10 12 14.5 16.5 10"/><path d="M4 17.5v2a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5v-2"/>`),
+  print: P(`<path d="M6.5 9V3.5h11V9"/><rect x="3.5" y="9" width="17" height="7.5" rx="1.6"/><path d="M6.5 14h11v6.5h-11z"/>`),
+  clock: P(`<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.2 2"/>`),
+  chart: P(`<path d="M3.5 3.5v17h17"/><path d="m7 15 3.5-4 3 2.6L20 7"/>`),
+  coin: P(`<circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.2A3 3 0 0 0 9.5 10c0 2.6 5 1.2 5 3.6a3 3 0 0 1-5 .8"/><path d="M12 7v10"/>`),
+  layers: P(`<path d="m12 3 8.5 4.5L12 12 3.5 7.5 12 3Z"/><path d="m3.5 12.5 8.5 4.5 8.5-4.5"/><path d="m3.5 16.5 8.5 4.5 8.5-4.5"/>`),
+  filter: P(`<path d="M3.5 5.5h17l-6.5 7.6v6.4l-4 2v-8.4L3.5 5.5Z"/>`),
+  arrowRight: P(`<path d="M4 12h15M13.5 6.5 20 12l-6.5 5.5"/>`),
+  mail: P(`<rect x="2.8" y="5" width="18.4" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/>`),
+  phone: P(`<path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2Z"/>`),
+  spinner: P(`<path d="M12 3a9 9 0 1 0 9 9" />`, `class="spin-src"`),
+  trend: P(`<path d="M3.5 16.5 9.5 10l4 4 7-7"/><path d="M15.5 7h5v5"/>`),
+  sparkle: P(`<path d="M12 3.5 13.8 9l5.7 1.8-5.7 1.8L12 18l-1.8-5.4L4.5 10.8 10.2 9 12 3.5Z"/>`),
+  lock: P(`<rect x="4.5" y="10.5" width="15" height="10" rx="2.2"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/><path d="M12 14.6v2.4"/>`),
+  shield: P(`<path d="M12 3 20 6v6c0 4.6-3.2 8-8 9-4.8-1-8-4.4-8-9V6l8-3Z"/><path d="m9 12 2.2 2.2L15.5 10"/>`),
+  key: P(`<circle cx="7.5" cy="16" r="3.2"/><path d="m9.9 13.6 8.6-8.6"/><path d="m16.5 7 2.2 2.2"/><path d="m14.5 9 2.2 2.2"/>`),
+  fingerprint: P(`<path d="M12 10.5v3a7 7 0 0 0 1.5 4.2"/><path d="M8.8 13.4a8 8 0 0 0 .6-3.4 2.6 2.6 0 0 1 5.2 0c0 .6 0 1.2-.1 1.8"/><path d="M6.2 18.6A11 11 0 0 0 6 12a6 6 0 0 1 12 0c0 .9-.1 1.7-.2 2.5"/><path d="M4.4 15.5A14 14 0 0 0 4 12a8 8 0 0 1 16 0c0 1.2-.1 2.3-.3 3.4"/><path d="M5.6 7.6A9 9 0 0 1 20 10.5"/>`),
+};
+
+/** Convenience: render an icon by name. */
+export const icon = (name) => icons[name] ?? icons.info;

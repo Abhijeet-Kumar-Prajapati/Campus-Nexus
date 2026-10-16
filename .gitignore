@@ -1,0 +1,15 @@
+node_modules/
+data/
+
+# Server secrets — the HMAC pepper must never be committed.
+SECURITY/pepper.key
+SECURITY/*.key
+
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.db
+*.db-wal
+*.db-shm

@@ -1,0 +1,65 @@
+{
+  "builtAt": "2026-10-16T12:57:49.710Z",
+  "assets": [
+    {
+      "source": "/css/style.css",
+      "path": "css/style.min.css",
+      "integrity": "sha384-12HNOp/0/Ip1fWGCRjRiKxWuARtDsHL5WDdFhRuWbNzxV/UrzoAQuDXidF924dsw",
+      "bytes": 31114
+    },
+    {
+      "source": "/js/api.js",
+      "path": "js/api.min.js",
+      "integrity": "sha384-W2EZTMPYRR2VnFoDlEt4LK2yVKal+TxOx3QNEcofG5oUnjg2lgWks6PtPbxzgqkp",
+      "bytes": 3701
+    },
+    {
+      "source": "/js/app.js",
+      "path": "js/app.min.js",
+      "integrity": "sha384-ph+WbsKqYQVWb8JOgcjQiWQYwJtlW+G6X7c29vATKRfuA/I5kZEW/0a0IUoMkKwv",
+      "bytes": 16357
+    },
+    {
+      "source": "/js/icons.js",
+      "path": "js/icons.min.js",
+      "integrity": "sha384-QjbC/ZW+Ti+h/KKC2kQlHG2PD4Z9m548SWhKxJ3tMU5aoiteeMDdfuAMEPu2I5RW",
+      "bytes": 5381
+    },
+    {
+      "source": "/js/ui.js",
+      "path": "js/ui.min.js",
+      "integrity": "sha384-palRpPtOjRAEfzbxhxG2r+Cy1ybWpRx4OCBoY4P0MToiPLL7UVx4FLzKfJ2EyfcQ",
+      "bytes": 10492
+    },
+    {
+      "source": "/js/views/arcade.js",
+      "path": "js/views/arcade.min.js",
+      "integrity": "sha384-ZPlw+g1PkjgexsgbhhWtdtWfZT9ZU4lcgo6jX5xxRaO3WcgwESG7Rsme5cyOfp+H",
+      "bytes": 14790
+    },
+    {
+      "source": "/js/views/dashboard.js",
+      "path": "js/views/dashboard.min.js",
+      "integrity": "sha384-7LloRsRkK7/P5/Bw7E4uuiQEagfpNwzdn1AnJtKtS6eYTCihnT1E7YgpUiFkrHf/",
+      "bytes": 12558
+    },
+    {
+      "source": "/js/views/library.js",
+      "path": "js/views/library.min.js",
+      "integrity": "sha384-5IpWXDRVLeG8rUmjTfwvg4b5tU6GMvebKzmw259F1tuEgv3mWzJfzQm20LPPEkou",
+      "bytes": 16124
+    },
+    {
+      "source": "/js/views/security.js",
+      "path": "js/views/security.min.js",
+      "integrity": "sha384-EvfVwqMvB/n0j4dWdVPxx6GuGHN727idQEekxN8Fnj098dAs0wwNXIUkxTvZZgkP",
+      "bytes": 16984
+    },
+    {
+      "source": "/js/views/store.js",
+      "path": "js/views/store.min.js",
+      "integrity": "sha384-TAkYFeQ1/jJswXH3vNnn+kYB1GgjDQeYdLI2dvdxpkNMOwt87a9K4yya6+ePy01O",
+      "bytes": 26406
+    }
+  ]
+}

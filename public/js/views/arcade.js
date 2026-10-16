@@ -1,0 +1,419 @@
+// ============================================================================
+//  Arcade — Number Guessing + Snake·Water·Gun, both rebuilt from the original
+//  C projects but with difficulty levels, rounds and a persistent leaderboard.
+// ============================================================================
+import { api } from "../api.js";
+import { icon } from "../icons.js";
+import { esc, fmt, toast, openModal, emptyState, on } from "../ui.js";
+import { refresh } from "../app.js";
+
+const v = {
+  tab: "guess",
+  player: localStorage.getItem("cnx-player") || "",
+};
+
+/* scoring mirrors the server's reference implementation */
+function scoreGuess(range, attempts, won) {
+  if (!won) return 0;
+  const base = { 10: 120, 50: 100, 100: 80, 500: 55 }[range] ?? 80;
+  const par = { 10: 3, 50: 4, 100: 6, 500: 9 }[range] ?? 6;
+  return Math.max(10, base + Math.max(0, Math.round((par - attempts) * 8)));
+}
+function scoreSwg(w, l, d) {
+  return Math.max(0, w * 30 + d * 8 - l * 5 + (w >= 3 ? 20 : 0));
+}
+
+export async function arcadeView(host) {
+  const [stats, board] = await Promise.all([api.arcadeStats(), api.leaderboard()]);
+
+  host.innerHTML = `
+    <div class="view">
+      <div class="row between mb" style="gap:12px">
+        <div class="segmented">
+          <button data-tab="guess" class="${v.tab === "guess" ? "on" : ""}">Number Guessing</button>
+          <button data-tab="swg"   class="${v.tab === "swg" ? "on" : ""}">Snake · Water · Gun</button>
+        </div>
+        <div class="row" style="gap:9px">
+          <input class="input" id="playerName" placeholder="Your name" value="${esc(v.player)}" style="width:180px">
+          <span class="badge violet">${fmt.num(stats.plays)} plays</span>
+        </div>
+      </div>
+
+      <div id="gameMount"></div>
+
+      <div class="grid-2 mt">
+        <div class="card">
+          <div class="card-head"><h4>Leaderboard</h4><span class="spacer"></span>
+            <div class="segmented">
+              <button data-lb="guess" class="on">Guessing</button>
+              <button data-lb="swg">S·W·G</button>
+            </div></div>
+          <div class="card-body">
+            <div class="lb-list" id="lbList"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h4>How scoring works</h4></div>
+          <div class="card-body">
+            <div class="col" style="gap:14px">
+              <div>
+                <div class="row" style="gap:8px;margin-bottom:7px">
+                  <div class="stat-icon" style="width:28px;height:28px;background:color-mix(in oklab,var(--blue) 18%,transparent);color:var(--blue)">${icon("search")}</div>
+                  <strong class="small">Number Guessing</strong>
+                </div>
+                <p class="small muted">A narrower range is worth more, and every attempt under par adds an 8-point
+                speed bonus. Fewer guesses, bigger score.</p>
+              </div>
+              <div>
+                <div class="row" style="gap:8px;margin-bottom:7px">
+                  <div class="stat-icon" style="width:28px;height:28px;background:color-mix(in oklab,var(--pink) 18%,transparent);color:var(--pink)">${icon("gamepad")}</div>
+                  <strong class="small">Snake · Water · Gun</strong>
+                </div>
+                <p class="small muted">Each win is 30 points and each draw 8, minus 5 for a loss.
+                Win three or more in a match for a 20-point streak bonus.</p>
+              </div>
+              <div class="alert info">${icon("info")} Scores are saved to the shared leaderboard — the same one the
+                dashboard reads.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  const playerInput = host.querySelector("#playerName");
+  playerInput.addEventListener("input", () => {
+    v.player = playerInput.value.trim();
+    localStorage.setItem("cnx-player", v.player);
+  });
+
+  on(host, "click", "[data-tab]", (e, el) => { v.tab = el.dataset.tab; refresh(); });
+
+  let lbGame = "guess";
+  const paintLb = async () => {
+    const b = await api.leaderboard(lbGame);
+    host.querySelector("#lbList").innerHTML = b.entries.length
+      ? b.entries.map((e, i) => `
+          <div class="lb-item ${v.player && e.player === v.player ? "mine" : ""}">
+            <div class="lb-rank ${i === 0 ? "g1" : i === 1 ? "g2" : i === 2 ? "g3" : ""}">${i + 1}</div>
+            <div class="lb-name">${esc(e.player)}
+              ${e.detail ? `<div class="tiny faint">${esc(e.detail)}</div>` : ""}</div>
+            <div class="lb-score">${fmt.num(e.score)}</div>
+          </div>`).join("")
+      : emptyState("No scores yet — play a round!", "trophy");
+  };
+  host.querySelectorAll("[data-lb]").forEach((el) =>
+    el.addEventListener("click", () => {
+      lbGame = el.dataset.lb;
+      host.querySelectorAll("[data-lb]").forEach((b) => b.classList.toggle("on", b === el));
+      paintLb();
+    }));
+  paintLb();
+
+  const mount = host.querySelector("#gameMount");
+  if (v.tab === "guess") guessGame(mount, host);
+  else swgGame(mount, host);
+}
+
+/* ===================================================== NUMBER GUESSING === */
+function guessGame(mount, host) {
+  const g = { range: 100, maxAttempts: 6, number: 0, attempts: [], won: false, over: false };
+  g.number = rand(1, g.range);
+
+  mount.innerHTML = `
+    <div class="game-stage">
+      <div class="game-board">
+        <div style="width:100%;max-width:520px;display:flex;flex-direction:column;align-items:center;gap:6px">
+          <div class="row" style="gap:10px;margin-bottom:6px">
+            <div class="field">
+              <label>Range</label>
+              <select class="select" id="gRange">
+                ${[10, 50, 100, 500].map((r) => `<option value="${r}" ${r === g.range ? "selected" : ""}>1 – ${r}</option>`).join("")}
+              </select>
+            </div>
+            <div class="field">
+              <label>Attempts allowed</label>
+              <select class="select" id="gTries">
+                ${[3, 5, 6, 10].map((t) => `<option value="${t}" ${t === g.maxAttempts ? "selected" : ""}>${t}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+
+          <div class="section-sub">I am thinking of a number between 1 and ${g.range}</div>
+          <div class="guess-head" id="gHead">${g.range}</div>
+          <div class="guess-feedback" id="gFb"></div>
+
+          <form id="gForm" class="row" style="gap:10px;margin-top:18px">
+            <input class="guess-input" id="gInput" type="number" min="1" max="${g.range}" placeholder="?" aria-label="Your guess">
+            <button class="btn btn-primary" type="submit">${icon("arrowRight")} Guess</button>
+          </form>
+
+          <div class="attempts" id="gPips"></div>
+          <div class="row mt" style="gap:9px" id="gEnd" hidden>
+            <button class="btn btn-ghost" id="gReplay">${icon("refresh")} Play again</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="align-self:start">
+        <div class="card-head"><h4>Session</h4></div>
+        <div class="card-body">
+          <div class="score-row"><span>Difficulty</span><strong id="gDiff">—</strong></div>
+          <div class="score-row"><span>Attempts used</span><strong id="gUsed">0 / ${g.maxAttempts}</strong></div>
+          <div class="score-row"><span>Best possible</span><strong id="gBest">${scoreGuess(g.range, 1, true)}</strong></div>
+          <div class="score-row total"><span>Score</span><strong id="gScore" style="color:var(--violet)">0</strong></div>
+          <div class="tiny faint mt">Save a score to climb the leaderboard.</div>
+        </div>
+      </div>
+    </div>`;
+
+  const $g = (id) => mount.querySelector("#" + id);
+  const feedback = (msg, cls) => {
+    const el = $g("gFb");
+    el.textContent = msg;
+    el.className = "guess-feedback " + cls;
+  };
+  const drawPips = () => {
+    $g("gPips").innerHTML = Array.from({ length: g.maxAttempts }, (_, i) => {
+      const used = g.attempts[i];
+      const cls = used === undefined ? "" : used === "hit" ? "used" : "miss";
+      const mark = used === undefined ? i + 1 : used === "hit" ? "✓" : "✗";
+      return `<div class="pip ${cls}">${mark}</div>`;
+    }).join("");
+  };
+
+  const difficulty = () => ({ 10: "Lightning", 50: "Quick", 100: "Classic", 500: "Endless" })[g.range];
+
+  $g("gRange").addEventListener("change", (e) => {
+    g.range = Number(e.target.value);
+    g.number = rand(1, g.range);
+    restart();
+  });
+  $g("gTries").addEventListener("change", (e) => { g.maxAttempts = Number(e.target.value); restart(); });
+  $g("gReplay").addEventListener("click", () => { g.number = rand(1, g.range); restart(); });
+
+  function restart() {
+    g.attempts = []; g.won = false; g.over = false;
+    $g("gInput").max = g.range;
+    $g("gInput").value = "";
+    $g("gInput").disabled = false;
+    $g("gForm").style.display = "";
+    $g("gEnd").hidden = true;
+    $g("gHead").textContent = g.range;
+    $g("gDiff").textContent = difficulty();
+    $g("gBest").textContent = scoreGuess(g.range, 1, true);
+    $g("gScore").textContent = "0";
+    $g("gUsed").textContent = `0 / ${g.maxAttempts}`;
+    feedback("", "");
+    drawPips();
+    $g("gInput").focus();
+  }
+
+  $g("gForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (g.over) return;
+    const raw = Number($g("gInput").value);
+    if (!Number.isInteger(raw) || raw < 1 || raw > g.range) {
+      return feedback(`Enter a whole number between 1 and ${g.range}`, "lo");
+    }
+
+    g.attempts.push(raw === g.number ? "hit" : "miss");
+    $g("gUsed").textContent = `${g.attempts.length} / ${g.maxAttempts}`;
+    drawPips();
+
+    if (raw === g.number) {
+      g.won = true; g.over = true;
+      const score = scoreGuess(g.range, g.attempts.length, true);
+      $g("gHead").textContent = g.number;
+      $g("gScore").textContent = score;
+      feedback(`Correct in ${g.attempts.length} attempt${g.attempts.length === 1 ? "" : "s"} — +${score} points!`, "ok");
+      $g("gInput").disabled = true;
+      $g("gForm").style.display = "none";
+      $g("gEnd").hidden = false;
+      $g("gHead").style.animation = "pop .4s cubic-bezier(.22,1,.36,1)";
+      saveScore("guess", score, `Range 1-${g.range} · ${g.attempts.length} attempts`);
+    } else if (raw > g.number) {
+      feedback("Lower number please!", "hi");
+      $g("gInput").value = "";
+    } else {
+      feedback("Higher number please!", "lo");
+      $g("gInput").value = "";
+    }
+
+    if (!g.over && g.attempts.length >= g.maxAttempts) {
+      g.over = true;
+      $g("gHead").textContent = g.number;
+      feedback(`Out of attempts — it was ${g.number}.`, "lo");
+      $g("gInput").disabled = true;
+      $g("gForm").style.display = "none";
+      $g("gEnd").hidden = false;
+    }
+  });
+
+  restart();
+}
+
+/* ===================================================== SNAKE·WATER·GUN === */
+const RPS = {
+  s: { emoji: "🐍", name: "Snake",  beats: "w", hint: "beats water" },
+  w: { emoji: "💧", name: "Water", beats: "g", hint: "beats gun" },
+  g: { emoji: "🔫", name: "Gun",   beats: "s", hint: "beats snake" },
+};
+
+function swgGame(mount, host) {
+  const g = { rounds: 5, target: 3, wins: 0, losses: 0, draws: 0, playing: false };
+
+  mount.innerHTML = `
+    <div class="game-stage">
+      <div class="game-board">
+        <div style="width:100%;max-width:600px">
+          <div class="row" style="justify-content:center;gap:10px;margin-bottom:6px">
+            <div class="field">
+              <label>Match length</label>
+              <select class="select" id="rRounds">
+                ${[[3, "Best of 3"], [5, "Best of 5"], [7, "Best of 7"], [9, "Best of 9"]].map(([n, l]) =>
+                  `<option value="${n}" ${n === g.rounds ? "selected" : ""}>${l}</option>`).join("")}
+              </select>
+            </div>
+            <div class="field">
+              <label>Win at</label>
+              <select class="select" id="rTarget">
+                ${[2, 3, 4, 5].map((n) => `<option value="${n}" ${n === g.target ? "selected" : ""}>${n} wins</option>`).join("")}
+              </select>
+            </div>
+          </div>
+
+          <div class="vs-banner" id="rBanner">Choose your move</div>
+
+          <div class="rps-arena" id="rArena">
+            ${Object.entries(RPS).map(([k, r]) => `
+              <button class="rps-card" data-pick="${k}">
+                <div class="rps-emoji">${r.emoji}</div>
+                <div class="rps-name">${r.name}</div>
+                <div class="rps-hint">${r.hint}</div>
+              </button>`).join("")}
+          </div>
+
+          <div class="row" style="justify-content:center;margin-top:18px">
+            <button class="btn btn-ghost" id="rReset">${icon("refresh")} Reset match</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="align-self:start">
+        <div class="card-head"><h4>Match</h4></div>
+        <div class="card-body">
+          <div class="score-row"><span>Wins</span><strong id="rW" style="color:var(--green)">0</strong></div>
+          <div class="score-row"><span>Draws</span><strong id="rD">0</strong></div>
+          <div class="score-row"><span>Losses</span><strong id="rL" style="color:var(--red)">0</strong></div>
+          <div class="score-row"><span>Rounds played</span><strong id="rPlayed">0</strong></div>
+          <div class="score-row total"><span>Score</span><strong id="rScore" style="color:var(--violet)">0</strong></div>
+        </div>
+      </div>
+    </div>`;
+
+  const $r = (id) => mount.querySelector("#" + id);
+
+  $r("rRounds").addEventListener("change", (e) => { g.rounds = Number(e.target.value); reset(); });
+  $r("rTarget").addEventListener("change", (e) => { g.target = Number(e.target.value); reset(); });
+  $r("rReset").addEventListener("click", reset);
+
+  function reset() {
+    g.wins = g.losses = g.draws = 0;
+    paint();
+    banner("Choose your move", "");
+  }
+
+  function paint() {
+    $r("rW").textContent = g.wins;
+    $r("rD").textContent = g.draws;
+    $r("rL").textContent = g.losses;
+    $r("rPlayed").textContent = g.wins + g.losses + g.draws;
+    $r("rScore").textContent = scoreSwg(g.wins, g.losses, g.draws);
+  }
+
+  function banner(html, cls) {
+    const b = $r("rBanner");
+    b.className = "vs-banner " + cls;
+    b.innerHTML = html;
+    b.style.animation = "none";
+    void b.offsetWidth;
+    b.style.animation = "";
+  }
+
+  const setLocked = (on) => mount.querySelectorAll("[data-pick]").forEach((b) => (b.disabled = on));
+
+  mount.querySelectorAll("[data-pick]").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      if (!v.player) {
+        toast("Add your name at the top before playing", "warn");
+        host.querySelector("#playerName")?.focus();
+        return;
+      }
+      const mine = btn.dataset.pick;
+      const comp = ["s", "w", "g"][randInt(3)];
+      mount.querySelectorAll("[data-pick]").forEach((b) => b.classList.toggle("sel", b === btn));
+      setLocked(true);
+
+      let result, cls, label;
+      if (mine === comp) {
+        result = "draw"; cls = "draw";
+        g.draws++;
+        label = "It's a draw!";
+      } else if (RPS[mine].beats === comp) {
+        result = "win"; cls = "win";
+        g.wins++;
+        label = "You win!";
+      } else {
+        result = "lose"; cls = "lose";
+        g.losses++;
+        label = "You lose";
+      }
+
+      banner(
+        `<span style="font-size:26px">${RPS[mine].emoji} vs ${RPS[comp].emoji}</span><br/>
+         <span style="font-size:13px">${label} — you chose ${RPS[mine].name.toLowerCase()}, computer chose ${RPS[comp].name.toLowerCase()}</span>`,
+        cls
+      );
+      paint();
+
+      const played = g.wins + g.losses + g.draws;
+      const finished = g.wins >= g.target || g.losses >= g.target || played >= g.rounds;
+
+      setTimeout(() => {
+        if (finished) {
+          const score = scoreSwg(g.wins, g.losses, g.draws);
+          const msg = g.wins > g.losses
+            ? `Match won ${g.wins}–${g.losses}!`
+            : g.wins === g.losses ? `Match drawn ${g.wins}–${g.losses}` : `Match lost ${g.wins}–${g.losses}`;
+          banner(`<span style="font-size:15px">${msg}</span><br/><span style="font-size:13px;color:var(--violet)">+${score} points</span>`, cls);
+          saveScore("swg", score, `Best of ${g.rounds} · ${g.wins} win${g.wins === 1 ? "" : "s"}`);
+          setLocked(false);
+          mount.querySelectorAll("[data-pick]").forEach((b) => b.classList.remove("sel"));
+        } else {
+          setLocked(false);
+        }
+      }, 1500);
+    })
+  );
+
+  reset();
+}
+
+/* ------------------------------------------------------------ helpers --- */
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randInt(n) { return Math.floor(Math.random() * n); }
+
+async function saveScore(game, score, detail) {
+  if (!v.player) return toast("Add your name at the top to save scores", "warn");
+  if (score <= 0) return;
+  try {
+    const res = await api.saveScore({ game, player: v.player, score, detail });
+    toast(res.message, "success", "New score saved");
+    // Give the player a moment to read the result, then rebuild the screen so
+    // the leaderboard and your rank show up.
+    setTimeout(() => refresh(), 1200);
+  } catch (err) {
+    toast(err.message, "error");
+  }
+}
