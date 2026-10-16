@@ -211,7 +211,22 @@ footer a:hover{color:var(--accent)}
   .reveal{opacity:1;transform:none}
 }
 @media (max-width:640px){
-  .nav-links a:not(.keep){display:none}
+  /* The links scroll sideways rather than disappearing. Hiding them left a
+     phone with no way to reach the source at all, which read as a dead
+     button rather than a missing one. */
+  .nav-in{gap:10px}
+  .nav-links{
+    margin-left:auto;flex-wrap:nowrap;
+    overflow-x:auto;overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    padding-bottom:2px;
+    /* Fade the right edge so it is obvious there is more to scroll to. */
+    mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 18px),transparent 100%);
+  }
+  .nav-links::-webkit-scrollbar{display:none}
+  .nav-links a{white-space:nowrap;flex:none}
+  .brand small{display:none}
   header{padding:52px 0 34px}
   section{padding:42px 0}
 }
@@ -226,7 +241,7 @@ footer a:hover{color:var(--accent)}
       <span>Campus Nexus<small>LIBRARY &middot; STORE &middot; ARCADE</small></span>
     </a>
     <div class="nav-links">
-      <a href="#demo" class="keep">Live demo</a>
+      <a href="#demo">Live demo</a>
       <a href="#modules">Modules</a>
       <a href="#security">Security</a>
       <a href="#run">Run it</a>
