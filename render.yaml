@@ -1,0 +1,20 @@
+# Render blueprint. "Deploy to Render" in the README picks this up.
+#
+# Why this file exists: Campus Nexus is a Node server with a SQLite file, so
+# it cannot run on GitHub Pages, which only serves static files. It needs a
+# host that actually starts `node server.js`.
+#
+# No secret is required to boot. The app picks a fresh HMAC pepper and seeds
+# its own catalogue on first run, so there is nothing to paste in here.
+services:
+  - type: web
+    name: campus-nexus
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm run build
+    startCommand: node server.js
+    healthCheckPath: /api/system/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22.5.0"

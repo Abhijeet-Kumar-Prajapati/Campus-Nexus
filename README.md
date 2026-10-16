@@ -1,6 +1,9 @@
 # 🎓 CAMPUS NEXUS
 
-### *Library · Store · Arcade* — four original projects, rebuilt as one application.
+### *Library · Store · Arcade* - four original projects, rebuilt as one application.
+
+[![Source](https://img.shields.io/badge/source-Abhijeet--Kumar--Prajapati%2FCampus--Nexus-7c5cff?style=for-the-badge)](https://github.com/Abhijeet-Kumar-Prajapati/Campus-Nexus)
+[![Deploy to Render](https://img.shields.io/badge/deploy-to%20Render-46a3eb?style=for-the-badge&logo=render&logoColor=white)](https://render.com/deploy?repo=https://github.com/Abhijeet-Kumar-Prajapati/Campus-Nexus)
 
 ---
 
