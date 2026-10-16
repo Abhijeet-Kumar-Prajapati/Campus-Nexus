@@ -3,6 +3,11 @@
 //  Exercises every route group against a live server on http://localhost:3000
 //  Start the server first (npm start) in another terminal.
 // ============================================================================
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const BASE = process.env.BASE ?? "http://localhost:3000";
 
 let pass = 0;
@@ -245,6 +250,24 @@ section("Session");
   await prime();
   const after = await call("POST", "/api/store/products", { name: "After Logout", price: 5, stock: 0 });
   check("session revoked after logout", after.status === 401, `got ${after.status}`);
+}
+
+/* --------------------------------------------------------- client sources -- */
+section("Client sources");
+{
+  // The server refuses a sign-in posted in under 1.2s and reads that gap
+  // from `_t`, which has to be the moment the form was RENDERED. The tests
+  // above pre-age `_t` by a couple of seconds because they are not a
+  // browser, so nothing in this file can catch a client that stamps it at
+  // submit time. That is exactly how the UI ended up unable to log in while
+  // this suite stayed green, so the shipped client source is asserted here.
+  const api = readFileSync(join(ROOT, "public", "js", "api.js"), "utf8");
+  const app = readFileSync(join(ROOT, "public", "js", "app.js"), "utf8");
+  check(
+    "client stamps _t at render time, not submit time",
+    !/_t:\s*Date\.now\(\)/.test(api) && /renderedAt/.test(api) && /renderedAt/.test(app),
+    "api.js must not stamp _t itself - showLogin() passes the render time"
+  );
 }
 
 /* -------------------------------------------------------------- summary --- */

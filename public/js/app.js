@@ -147,6 +147,10 @@ function paintTopbarAccount() {
  * a hidden honeypot field (bots fill every input) and a minimum submit time.
  */
 export function showLogin() {
+  // Captured here, not at submit time. The server refuses a sign-in sent in
+  // under 1.2s, so this must be the moment the form appeared; stamping it
+  // on submit made every elapsed zero and locked every real user out.
+  const renderedAt = Date.now();
   const m = openModal({
     title: "Sign in to Campus Nexus",
     subtitle: "Required for issuing books, editing stock and billing",
@@ -210,7 +214,7 @@ export function showLogin() {
     note.hidden = true;
 
     try {
-      const res = await api.login(username, password, honeypot);
+      const res = await api.login(username, password, honeypot, renderedAt);
       state.user = res.user;
       m.close();
       paintUserChip();

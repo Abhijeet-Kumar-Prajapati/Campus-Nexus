@@ -7,7 +7,6 @@
 //
 //      node scripts/unlock-admin.js            unlock every account
 //      node scripts/unlock-admin.js admin      unlock one account
-//      node scripts/clear-locks.js             same thing, alias
 // ============================================================================
 import { db } from "../src/db.js";
 

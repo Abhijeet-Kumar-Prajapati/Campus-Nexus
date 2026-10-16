@@ -233,6 +233,11 @@ export async function issueBook(req, res) {
   }, { strict: true }));
   if (!b) return;
 
+  // A missing bookId is a malformed request, not a missing book. Without
+  // this the lookup below runs with undefined and answers "Book not found",
+  // so a client that forgot the field got a 404 for what was really a 400.
+  if (!b.bookId) return fail(res, "A bookId is required");
+
   const book = db.prepare("SELECT * FROM books WHERE id=?").get(b.bookId);
   if (!book) return fail(res, "Book not found", 404);
   if (book.copies_available < 1) return fail(res, `No copy of “${book.title}” is currently available`, 409);

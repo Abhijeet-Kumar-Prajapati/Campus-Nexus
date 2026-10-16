@@ -68,9 +68,13 @@ export const api = {
   activity:   (limit = 30)  => request("GET", "/api/system/activity" + qs({ limit })),
 
   /* --------------------------------------------------------------- auth -- */
-  // `_t` lets the server reject impossibly fast (bot) submissions.
-  login:      (username, password, hp = "") =>
-                 request("POST", "/api/auth/login", { username, password, hp, _t: Date.now() }),
+  // `_t` must be the moment the sign-in form was RENDERED, not the moment it
+  // was submitted. The server refuses anything under 1.2s, so stamping it here
+  // left an elapsed of roughly zero and every real sign-in came back 429
+  // "Rate limited" - the API worked, the app did not. showLogin() passes the
+  // render timestamp.
+  login:      (username, password, hp = "", renderedAt = Date.now()) =>
+                 request("POST", "/api/auth/login", { username, password, hp, _t: renderedAt }),
   logout:     ()             => request("POST", "/api/auth/logout", {}),
   me:         ()             => request("GET", "/api/auth/me"),
   changePassword: (current, next) => request("POST", "/api/auth/change-password", { current, next }),

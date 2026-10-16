@@ -200,6 +200,11 @@ export async function restock(req, res, { id }) {
   const body = check(res, await readJson(req),
     V.object({ add: V.int({ min: 1, max: 1_000_000, fallback: 0 }) }, { strict: true }));
   if (!body) return;
+  // `add` carries a fallback of 0, which is what stops an omitted value from
+  // being a shape error - but it also meant a restock request with no
+  // quantity came back 200 with "+0 units in stock" and changed nothing. A
+  // request that does nothing must not report that it worked.
+  if (!body.add) return fail(res, "Restock quantity is required");
   const prod = db.prepare("SELECT * FROM products WHERE id=?").get(num(id));
   if (!prod) return fail(res, "Product not found", 404);
 
@@ -282,6 +287,10 @@ export async function createBill(req, res) {
   const lines = [];
   let subtotal = 0;
   for (const it of b.items) {
+    // Without a productId the lookup below matches nothing and the customer is
+    // told the item "is no longer available", which describes a stock problem
+    // rather than the missing field that actually caused it.
+    if (!it.productId) return fail(res, "Every item needs a productId");
     const prod = db.prepare("SELECT * FROM products WHERE id=? AND active=1").get(it.productId);
     if (!prod) return fail(res, "One of the items is no longer available in the inventory");
     if (prod.stock < it.qty) {

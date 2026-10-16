@@ -1,5 +1,5 @@
 {
-  "builtAt": "2026-10-16T12:57:49.710Z",
+  "builtAt": "2026-10-16T13:22:33.401Z",
   "assets": [
     {
       "source": "/css/style.css",
@@ -10,14 +10,14 @@
     {
       "source": "/js/api.js",
       "path": "js/api.min.js",
-      "integrity": "sha384-W2EZTMPYRR2VnFoDlEt4LK2yVKal+TxOx3QNEcofG5oUnjg2lgWks6PtPbxzgqkp",
-      "bytes": 3701
+      "integrity": "sha384-hCT6V5+4rAxum/1b+L1mrOPLJpuS2Ks/FfmLgjawgMlnodeJlTASh8bbb6Uvce1+",
+      "bytes": 3723
     },
     {
       "source": "/js/app.js",
       "path": "js/app.min.js",
-      "integrity": "sha384-ph+WbsKqYQVWb8JOgcjQiWQYwJtlW+G6X7c29vATKRfuA/I5kZEW/0a0IUoMkKwv",
-      "bytes": 16357
+      "integrity": "sha384-8RSzIyIFSCHL/D613HD6MVD0zl6cuTyNeLSQu2UeYDaglAcEvDuPdE2C+iceFJiK",
+      "bytes": 16396
     },
     {
       "source": "/js/icons.js",
