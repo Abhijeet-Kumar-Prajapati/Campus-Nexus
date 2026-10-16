@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Download - Campus Nexus</title>
+<meta name="description" content="Download Campus Nexus and run it in three steps. Zero dependencies, no build step, Node 22.5 or newer.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%237c5cff'/%3E%3Cg fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M25 42 50 27l25 15-25 15-25-15Z'/%3E%3Cpath d='M33 50v18c0 5 8 9 17 9s17-4 17-9V50'/%3E%3C/g%3E%3C/svg%3E">
+
+<style>
+:root{
+  --bg:#070910;--bg2:#0c0f1a;--surface:#111527;--surface2:#161a2e;
+  --border:#232a45;--border2:#2e3757;
+  --fg:#e9edf7;--fg2:#c3cade;--dim:#8b95b5;--faint:#616c8c;
+  --accent:#7c5cff;--accent2:#3b82f6;--accent3:#06b6d4;
+  --ok:#10b981;--warn:#f59e0b;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:16px;--r-sm:10px;
+}
+[data-theme="light"]{
+  --bg:#f6f7fb;--bg2:#eef0f8;--surface:#fff;--surface2:#f4f6fc;
+  --border:#dfe3ef;--border2:#cdd4e6;
+  --fg:#131725;--fg2:#333c58;--dim:#5a6486;--faint:#8791b0;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(900px 460px at 12% -8%,rgba(124,92,255,.17),transparent 62%),
+    radial-gradient(760px 420px at 92% 4%,rgba(59,130,246,.13),transparent 60%);
+  background-attachment:fixed;
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px}
+
+/* ---- bar ---- */
+.bar{display:flex;align-items:center;gap:14px;padding:12px 22px;position:sticky;top:0;z-index:30;
+  border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.3px;color:var(--fg);white-space:nowrap}
+.brand svg{width:27px;height:27px;border-radius:7px;flex:none}
+.bar .sp{margin-left:auto}
+.tb{width:33px;height:33px;border-radius:9px;border:1px solid var(--border);background:var(--surface);
+  color:var(--fg);cursor:pointer;display:grid;place-items:center;flex:none}
+.tb:hover{border-color:var(--accent)}
+
+/* ---- hero ---- */
+header{padding:64px 0 40px;text-align:center}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;margin-bottom:20px;padding:5px 14px;border-radius:999px;
+  border:1px solid var(--border2);background:var(--surface);font-size:12px;font-weight:650;color:var(--dim)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 9px var(--ok)}
+h1{margin:0 0 16px;font-size:clamp(30px,5.4vw,52px);line-height:1.06;letter-spacing:-1.9px;font-weight:820}
+.grad{background:linear-gradient(120deg,var(--accent),var(--accent2) 50%,var(--accent3));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--accent)}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){.grad{background:none}}
+.lead{max-width:64ch;margin:0 auto 28px;color:var(--dim);font-size:clamp(15px,1.6vw,17.5px)}
+
+/* ---- download card ---- */
+.dl-card{
+  max-width:680px;margin:0 auto;border:1px solid var(--border2);border-radius:var(--r);
+  background:linear-gradient(160deg,var(--surface),var(--bg2));padding:26px;
+  box-shadow:0 26px 70px rgba(0,0,0,.4);text-align:left
+}
+.dl-top{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.dl-ic{width:52px;height:52px;border-radius:13px;display:grid;place-items:center;font-size:25px;flex:none;
+  background:linear-gradient(135deg,rgba(124,92,255,.24),rgba(6,182,212,.18));border:1px solid var(--border2)}
+.dl-name{font-weight:760;font-size:17px;letter-spacing:-.3px}
+.dl-sub{color:var(--faint);font-size:12.8px;font-family:var(--mono)}
+.btn{
+  display:inline-flex;align-items:center;gap:10px;padding:13px 26px;border-radius:11px;
+  font-weight:700;font-size:15px;border:1px solid transparent;transition:transform .16s,box-shadow .16s;white-space:nowrap
+}
+.btn:hover{transform:translateY(-2px);text-decoration:none}
+.btn-main{margin-left:auto;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
+  box-shadow:0 10px 30px rgba(124,92,255,.32)}
+.dl-note{margin-top:18px;padding-top:16px;border-top:1px solid var(--border);color:var(--dim);font-size:13.5px}
+.dl-note b{color:var(--fg)}
+
+.alt{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.btn-ghost{background:var(--surface);border-color:var(--border2);color:var(--fg)}
+.btn-ghost:hover{border-color:var(--accent)}
+
+/* ---- steps ---- */
+section{padding:52px 0}
+h2{font-size:clamp(23px,3.2vw,32px);letter-spacing:-1px;margin:0 0 12px;font-weight:780}
+.sec-lead{color:var(--dim);max-width:62ch;margin:0 0 32px;font-size:16px}
+.steps{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));counter-reset:s}
+.step{border:1px solid var(--border);border-radius:var(--r);background:var(--surface);padding:24px;position:relative}
+.step .num{
+  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  font-weight:800;font-size:14px;margin-bottom:14px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff
+}
+.step h3{margin:0 0 8px;font-size:16px;letter-spacing:-.2px}
+.step p{margin:0 0 13px;color:var(--dim);font-size:14.2px}
+pre{
+  margin:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:13px 15px;overflow-x:auto;font-family:var(--mono);font-size:12.8px;line-height:1.7;color:var(--fg2)
+}
+pre .c{color:var(--faint)}
+
+/* ---- boxes ---- */
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+.box{border:1px solid var(--border);border-radius:var(--r);background:var(--surface);padding:22px}
+.box h3{margin:0 0 13px;font-size:15.5px;display:flex;align-items:center;gap:9px}
+.box ul{margin:0;padding-left:19px;color:var(--dim);font-size:14px}
+.box li{margin-bottom:6px}
+.box code{background:var(--surface2);padding:1px 6px;border-radius:5px;font-size:12.8px;color:var(--fg2)}
+.badge{width:21px;height:21px;border-radius:6px;display:grid;place-items:center;font-size:12px;font-weight:800;flex:none}
+.ok h3{color:#6ee7b7}.ok .badge{background:rgba(16,185,129,.2);color:#6ee7b7}
+.warn h3{color:#fcd34d}.warn .badge{background:rgba(245,158,11,.2);color:#fcd34d}
+.info h3{color:#93c5fd}.info .badge{background:rgba(59,130,246,.2);color:#93c5fd}
+
+.stats{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.stat{border:1px solid var(--border);border-radius:var(--r);background:var(--surface);padding:20px;text-align:center}
+.stat b{display:block;font-size:28px;letter-spacing:-1px;
+  background:linear-gradient(135deg,var(--accent),var(--accent3));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--accent)}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){.stat b{background:none}}
+.stat span{font-size:12.5px;color:var(--dim)}
+
+footer{border-top:1px solid var(--border);padding:34px 0;margin-top:20px;text-align:center;color:var(--faint);font-size:13px}
+.reveal{opacity:0;transform:translateY(18px)}
+.reveal.in{opacity:1;transform:none;transition:opacity .6s,transform .6s}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+@media (max-width:640px){
+  .btn-main{margin-left:0;width:100%;justify-content:center}
+  .btn{width:100%;justify-content:center}
+  header{padding:48px 0 32px}
+  section{padding:40px 0}
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <a class="brand" href="./">
+    <svg viewBox="0 0 100 100"><rect width="100" height="100" rx="24" fill="#7c5cff"/><g fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M25 42 50 27l25 15-25 15-25-15Z"/><path d="M33 50v18c0 5 8 9 17 9s17-4 17-9V50"/></g></svg>
+    <span>Campus Nexus</span>
+  </a>
+  <span class="sp"></span>
+  <a class="tb" href="./" title="Back to the project" aria-label="Back to the project" style="display:grid;place-items:center">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+  </a>
+  <button class="tb" id="themeBtn" title="Toggle theme" aria-label="Toggle theme"></button>
+</div>
+
+<header>
+  <div class="wrap">
+    <span class="eyebrow"><span class="dot"></span> Free &middot; no sign-up &middot; no install step</span>
+    <h1>Get Campus Nexus<br><span class="grad">running in a minute</span></h1>
+    <p class="lead">
+      One Node application for the library, the counter, the arcade and a security centre.
+      Download it, unzip it, run it. There is nothing to install first, because there is
+      nothing to install.
+    </p>
+
+    <div class="dl-card reveal">
+      <div class="dl-top">
+        <span class="dl-ic">&#128230;</span>
+        <div>
+          <div class="dl-name">Campus-Nexus-1.0.0.zip</div>
+          <div class="dl-sub">221 KB &middot; 65 files &middot; Node 22.5+</div>
+        </div>
+        <a class="btn btn-main" href="https://github.com/Abhijeet-Kumar-Prajapati/Campus-Nexus/releases/download/v1.0.0/Campus-Nexus-1.0.0.zip" download>
+          &#11015; Download the ZIP
+        </a>
+      </div>
+      <div class="dl-note">
+        <b>Nothing hidden inside.</b> No key file, no database, no telemetry, no analytics.
+        The application generates its own pepper and its own database the first time it
+        starts, so there is nothing to trust and nothing to configure.
+      </div>
+    </div>
+
+    <div class="alt">
+      <a class="btn btn-ghost" href="./">Look at it first</a>
+      <a class="btn btn-ghost" href="source.html">Read the code</a>
+      <a class="btn btn-ghost" href="https://github.com/Abhijeet-Kumar-Prajapati/Campus-Nexus" target="_blank" rel="noopener noreferrer">Clone from GitHub</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="stats reveal">
+      <div class="stat"><b>0</b><span>dependencies to install</span></div>
+      <div class="stat"><b>3</b><span>steps</span></div>
+      <div class="stat"><b>165</b><span>tests that pass</span></div>
+      <div class="stat"><b>29</b><span>security controls</span></div>
+      <div class="stat"><b>20</b><span>SQLite tables, created for you</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 class="reveal">Three steps</h2>
+    <p class="sec-lead reveal">No build step, no package manager, no environment file.</p>
+    <div class="steps reveal">
+      <div class="step">
+        <div class="num">1</div>
+        <h3>Unzip it anywhere</h3>
+        <p>Pick any folder. It does not care where it lives and it writes nothing outside it.</p>
+        <pre>unzip Campus-Nexus-1.0.0.zip
+<span class="c"># Windows: right-click &rarr; Extract All</span></pre>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h3>Check Node is there</h3>
+        <p>It needs <b>22.5 or newer</b>. Anything older has no <code>node:sqlite</code>, which is the only reason for the floor.</p>
+        <pre>node --version
+<span class="c"># v22.5.0 or above</span></pre>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h3>Start it</h3>
+        <p>Windows users can double-click <code>start.bat</code>. It prints the address and opens the browser.</p>
+        <pre>node server.js
+<span class="c"># or: start.bat  on Windows</span></pre>
+      </div>
+    </div>
+
+    <div class="grid reveal" style="margin-top:18px">
+      <div class="box info">
+        <h3><span class="badge">i</span> Sign in</h3>
+        <ul>
+          <li><code>admin</code> / <code>admin123</code> &mdash; full access</li>
+          <li><code>staff</code> / <code>staff123</code> &mdash; counter only</li>
+          <li>Change both before putting this anywhere other than your own machine.</li>
+        </ul>
+      </div>
+      <div class="box ok">
+        <h3><span class="badge">&#10003;</span> What the first run makes</h3>
+        <ul>
+          <li>20 books, 25 products and a bill history, seeded</li>
+          <li><code>data/campus-nexus.db</code> from <code>src/schema.sql</code></li>
+          <li>A fresh HMAC pepper and data key in <code>SECURITY/</code></li>
+          <li>An audit chain of 120 sealed blocks</li>
+        </ul>
+      </div>
+      <div class="box warn">
+        <h3><span class="badge">!</span> Before you expose it</h3>
+        <ul>
+          <li>Demo logins are printed on every start</li>
+          <li>Sessions are in memory &mdash; a restart signs everyone out</li>
+          <li>It binds <code>localhost</code> by default, which is deliberate</li>
+          <li><code>SECURITY.md</code> lists what it does not cover</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 class="reveal">Also worth knowing</h2>
+    <div class="grid reveal">
+      <div class="box">
+        <h3>Prefer a hosted instance?</h3>
+        <ul>
+          <li>The repository ships a <code>render.yaml</code> and a <code>Procfile</code></li>
+          <li>Any Node host works &mdash; it just runs <code>node server.js</code></li>
+          <li>Needs a writable disk for the SQLite file and the key folder</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Check it before you trust it</h3>
+        <ul>
+          <li><code>npm test</code> &mdash; 45 end-to-end checks over HTTP</li>
+          <li><code>npm run test:security</code> &mdash; 98 attack checks</li>
+          <li><code>npm run test:pii</code> &mdash; greps the database for plaintext</li>
+          <li>All 165 pass against the release you just downloaded</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>What is not in the archive</h3>
+        <ul>
+          <li>The website files &mdash; they are online and unused at runtime</li>
+          <li>2.3 MB of screenshots, for the same reason</li>
+          <li>Any key, database or build residue, by design</li>
+          <li>Your data, obviously &mdash; it is created fresh per machine</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>
+      <a href="https://github.com/Abhijeet-Kumar-Prajapati/Campus-Nexus/releases/tag/v1.0.0" target="_blank" rel="noopener noreferrer">Release notes</a>
+      &middot; <a href="source.html">Read the code</a>
+      &middot; <a href="./">Project page</a>
+      &middot; built by Abhijeet Kumar Prajapati
+    </p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  const root = document.documentElement;
+  const btn = document.getElementById("themeBtn");
+  const paint = () => {
+    const dark = root.getAttribute("data-theme") !== "light";
+    btn.innerHTML = dark
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.3A8.5 8.5 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8Z"/></svg>';
+  };
+  try { const s = localStorage.getItem("cnx-site-theme"); if (s) root.setAttribute("data-theme", s); } catch (e) {}
+  paint();
+  btn.addEventListener("click", () => {
+    const n = root.getAttribute("data-theme") === "light" ? "dark" : "light";
+    root.setAttribute("data-theme", n);
+    try { localStorage.setItem("cnx-site-theme", n); } catch (e) {}
+    paint();
+  });
+
+  const items = document.querySelectorAll(".reveal");
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((es) => {
+      for (const e of es) if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.06 });
+    items.forEach((el) => io.observe(el));
+  } else items.forEach((el) => el.classList.add("in"));
+})();
+</script>
+</body>
+</html>
