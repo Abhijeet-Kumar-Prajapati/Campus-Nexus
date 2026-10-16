@@ -389,5 +389,3 @@ genuinely **not** addressed:
 8. Run `npm run build` and serve `public/dist/` so SRI is active in production.
 
 ---
-
-MIT

@@ -206,6 +206,20 @@ svg { display: block; }
 .user-chip .meta strong { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .user-chip .meta span { font-size: 11px; color: var(--text-faint); text-transform: capitalize; }
 
+/* Repository link in the sidebar foot. Opens in a new tab so the running
+   app is not replaced by a read-only copy of its own source. */
+.repo-link {
+display: flex; align-items: center; gap: 9px;
+margin-top: 8px; padding: 9px 10px;
+border-radius: var(--r-sm);
+border: 1px solid var(--border);
+color: var(--text-dim); text-decoration: none; font-size: 12px;
+transition: border-color .18s, color .18s, background .18s;
+}
+.repo-link:hover { border-color: var(--accent); color: var(--text); background: var(--surface); text-decoration: none; }
+.repo-link svg { width: 17px; height: 17px; flex: none; }
+.repo-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* --------------------------------------------------------- 5. main/topbar -- */
 .main { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
 

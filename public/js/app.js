@@ -64,6 +64,12 @@ function shell() {
       <nav>${navHtml}</nav>
       <div class="sidebar-foot">
         <div class="user-chip" id="userChip"></div>
+        <a class="repo-link"
+           href="https://github.com/Abhijeet-Kumar-Prajapati/Campus-Nexus"
+           target="_blank" rel="noopener noreferrer"
+           title="Open the source on GitHub">
+          ${icon("github")}<span>Abhijeet-Kumar-Prajapati / Campus-Nexus</span>
+        </a>
       </div>
     </aside>
 
@@ -182,9 +188,9 @@ export function showLogin() {
       <div class="login-demo">
         <div class="small faint" style="margin-bottom:2px">Demo accounts — click to fill</div>
         <button type="button" class="dbtn" data-fill="admin|admin123">
-          <span>Administrator · Priya Raghavan</span><code>admin / admin123</code></button>
+          <span>Administrator &middot; Abhijeet Kumar Prajapati</span><code>admin / admin123</code></button>
         <button type="button" class="dbtn" data-fill="staff|staff123">
-          <span>Counter staff · Dev Kumar</span><code>staff / staff123</code></button>
+          <span>Counter staff</span><code>staff / staff123</code></button>
       </div>`,
     footer: `
       <button class="btn btn-ghost" data-close>Cancel</button>

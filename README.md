@@ -1,6 +1,6 @@
 # 🎓 CAMPUS NEXUS
 
-### *Library · Store · Arcade* — three original projects, rebuilt as one application.
+### *Library · Store · Arcade* — four original projects, rebuilt as one application.
 
 ---
 
@@ -356,5 +356,3 @@ Read [`SECURITY.md`](./SECURITY.md) §5 for the honest list of what this
 application still does **not** protect against, and what to do before deploying.
 
 ---
-
-MIT · built as a consolidation of four earlier academic projects.

@@ -1,6 +1,6 @@
 {
-  "head": "00794e30a29a69f8b84fac5c971632994aae8914ff6437e0d94cc189d2fbd5a5",
-  "height": 504,
-  "sealed_at": "2026-10-16T13:36:40.734Z",
+  "head": "008c6e52c28cf26c6598c2ab8bacf5a2fc965e27cb76003a0130de943e1a8f75",
+  "height": 60,
+  "sealed_at": "2026-10-16T13:56:54.994Z",
   "note": "External copy of the ledger head. If this disagrees with the database, the chain was rewritten wholesale."
 }

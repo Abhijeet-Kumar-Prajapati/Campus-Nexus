@@ -1,11 +1,11 @@
 {
-  "builtAt": "2026-10-16T13:22:33.401Z",
+  "builtAt": "2026-10-16T13:53:32.695Z",
   "assets": [
     {
       "source": "/css/style.css",
       "path": "css/style.min.css",
-      "integrity": "sha384-12HNOp/0/Ip1fWGCRjRiKxWuARtDsHL5WDdFhRuWbNzxV/UrzoAQuDXidF924dsw",
-      "bytes": 31114
+      "integrity": "sha384-KjQEQ8vGbXU1kjmvcSlHVF/MMzmKgdvKYubnoa2SLFut4TxczEmtm+xxHqHf1vPX",
+      "bytes": 31599
     },
     {
       "source": "/js/api.js",
@@ -16,14 +16,14 @@
     {
       "source": "/js/app.js",
       "path": "js/app.min.js",
-      "integrity": "sha384-8RSzIyIFSCHL/D613HD6MVD0zl6cuTyNeLSQu2UeYDaglAcEvDuPdE2C+iceFJiK",
-      "bytes": 16396
+      "integrity": "sha384-UMKyjvqdTfxOHV3yt9lFu7rpFYZfBIDsMBX9ms3puoiMX9yQoHwnKLMz3flQHF5b",
+      "bytes": 16695
     },
     {
       "source": "/js/icons.js",
       "path": "js/icons.min.js",
-      "integrity": "sha384-QjbC/ZW+Ti+h/KKC2kQlHG2PD4Z9m548SWhKxJ3tMU5aoiteeMDdfuAMEPu2I5RW",
-      "bytes": 5381
+      "integrity": "sha384-TCP9wMkQTBuCDVF5R4grC+YhL5+bIcuqHu5gCVADmFyw1DGop4UpUIpJuzXcY4XM",
+      "bytes": 5659
     },
     {
       "source": "/js/ui.js",

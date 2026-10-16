@@ -66,8 +66,8 @@ function seed() {
     `INSERT INTO users (username, pass_hash, pass_salt, full_name, role)
      VALUES (?, ?, ?, ?, ?)`
   );
-  seedUser.run("admin", ...pw("admin123"), "Priya Raghavan", "admin");
-  seedUser.run("staff", ...pw("staff123"), "Dev Kumar", "staff");
+  seedUser.run("admin", ...pw("admin123"), "Abhijeet Kumar Prajapati", "admin");
+  seedUser.run("staff", ...pw("staff123"), "Counter Staff", "staff");
 
   // ---------------------------------------------------------------- library --
   const insBook = db.prepare(
