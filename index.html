@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Nexus - Library, Store and Arcade in one application</title>
+<meta name="description" content="Four student projects rebuilt as one Node application: a library system, a billing counter, two arcade games and a security centre. Zero runtime dependencies. 165 passing tests.">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%237c5cff'/%3E%3Cg fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M25 42 50 27l25 15-25 15-25-15Z'/%3E%3Cpath d='M33 50v18c0 5 8 9 17 9s17-4 17-9V50'/%3E%3C/g%3E%3C/svg%3E">
+
+<style>
+:root{
+  --bg:#070910; --bg2:#0c0f1a; --surface:#111527; --surface2:#161a2e;
+  --border:#232a45; --border2:#2e3757;
+  --fg:#e9edf7; --fg2:#c3cade; --dim:#8b95b5; --faint:#616c8c;
+  --accent:#7c5cff; --accent2:#3b82f6; --accent3:#06b6d4;
+  --ok:#10b981; --warn:#f59e0b; --bad:#ef4444;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:14px; --r-sm:9px;
+}
+[data-theme="light"]{
+  --bg:#f6f7fb; --bg2:#eef0f8; --surface:#fff; --surface2:#f4f6fc;
+  --border:#dfe3ef; --border2:#cdd4e6;
+  --fg:#131725; --fg2:#333c58; --dim:#5a6486; --faint:#8791b0;
+  --accent-soft:#f1ecff;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);
+  line-height:1.65;-webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(900px 460px at 12% -8%, rgba(124,92,255,.17), transparent 62%),
+    radial-gradient(760px 420px at 92% 4%, rgba(59,130,246,.13), transparent 60%);
+  background-attachment:fixed;
+}
+a{color:var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+
+/* ------------------------------------------------------------ nav ----- */
+nav{
+  position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);
+  background:color-mix(in srgb,var(--bg) 84%,transparent);
+  border-bottom:1px solid var(--border);
+}
+.nav-in{max-width:1180px;margin:0 auto;padding:13px 22px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:-.4px;color:var(--fg);text-decoration:none}
+.brand svg{width:30px;height:30px;border-radius:8px;flex:none}
+.brand small{display:block;font-size:9.5px;letter-spacing:1.6px;color:var(--faint);font-weight:700}
+.nav-links{margin-left:auto;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.nav-links a{
+  color:var(--dim);text-decoration:none;font-size:13px;font-weight:550;
+  padding:7px 11px;border-radius:8px
+}
+.nav-links a:hover{color:var(--fg);background:var(--surface)}
+.theme-btn{
+  width:34px;height:34px;border-radius:9px;border:1px solid var(--border);
+  background:var(--surface);color:var(--fg);cursor:pointer;display:grid;place-items:center
+}
+.theme-btn:hover{border-color:var(--accent)}
+
+/* ----------------------------------------------------------- hero ----- */
+header{padding:74px 0 44px;text-align:center}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;margin-bottom:22px;
+  padding:5px 14px;border-radius:999px;border:1px solid var(--border2);
+  background:var(--surface);font-size:12px;font-weight:650;color:var(--dim)
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 9px var(--ok)}
+h1{
+  margin:0 0 20px;font-size:clamp(34px,6.6vw,62px);line-height:1.05;
+  letter-spacing:-2.2px;font-weight:820
+}
+.grad{
+  background:linear-gradient(120deg,var(--accent) 0%,var(--accent2) 48%,var(--accent3) 100%);
+  -webkit-background-clip:text;background-clip:text;
+  /* -webkit-text-fill-color is what actually clips in WebKit/Blink.
+     color:transparent alone leaves the gradient painting as a rectangle
+     behind the text on some builds. The colour property stays as the
+     fallback for anything that cannot do the clip at all. */
+  -webkit-text-fill-color:transparent;color:var(--accent);
+}
+/* If background-clip:text is unsupported the text stays accent-coloured
+   rather than vanishing against the background. */
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){
+  .grad{background:none}
+}
+.lead{max-width:70ch;margin:0 auto 30px;color:var(--dim);font-size:clamp(15px,1.7vw,18px)}
+.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:22px}
+.btn{
+  display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:11px;
+  font-weight:680;font-size:14.5px;text-decoration:none;border:1px solid transparent;
+  transition:transform .16s,box-shadow .16s,border-color .16s
+}
+.btn:hover{transform:translateY(-2px);text-decoration:none}
+.btn-main{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 10px 30px rgba(124,92,255,.3)}
+.btn-ghost{background:var(--surface);border-color:var(--border2);color:var(--fg)}
+.btn-ghost:hover{border-color:var(--accent)}
+.meta{color:var(--faint);font-size:13px}
+.meta code{font-family:var(--mono);color:var(--dim);background:var(--surface);padding:2px 7px;border-radius:5px}
+
+/* -------------------------------------------------------- sections ---- */
+section{padding:56px 0}
+h2{font-size:clamp(25px,3.4vw,36px);letter-spacing:-1.1px;margin:0 0 12px;font-weight:790}
+.sec-lead{color:var(--dim);max-width:66ch;margin:0 0 34px;font-size:16px}
+
+/* --------------------------------------------------------- demo ------- */
+.demo-shell{
+  border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;
+  background:var(--surface);box-shadow:0 26px 70px rgba(0,0,0,.42)
+}
+.demo-top{
+  display:flex;align-items:center;gap:9px;padding:11px 15px;
+  background:var(--bg2);border-bottom:1px solid var(--border);font-size:12.5px;color:var(--dim)
+}
+.demo-top .dots{display:flex;gap:6px}
+.demo-top .dots i{width:10px;height:10px;border-radius:50%;display:block}
+.demo-top .dots i:nth-child(1){background:#ff5f57}
+.demo-top .dots i:nth-child(2){background:#febc2e}
+.demo-top .dots i:nth-child(3){background:#28c840}
+.demo-top code{
+  margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--faint);
+  background:var(--surface);padding:3px 9px;border-radius:6px
+}
+.demo-frame{position:relative;width:100%;aspect-ratio:16/10;background:var(--bg2)}
+.demo-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.demo-cover{
+  position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+  padding:34px;background:linear-gradient(180deg,rgba(10,12,22,.93),rgba(10,12,22,.97));
+  backdrop-filter:blur(3px)
+}
+.demo-cover.hide{display:none}
+.demo-cover h3{margin:0 0 10px;font-size:21px;letter-spacing:-.5px}
+.demo-cover p{color:var(--dim);max-width:50ch;margin:0 auto 22px;font-size:14.5px}
+.demo-note{
+  padding:13px 17px;background:var(--bg2);border-top:1px solid var(--border);
+  font-size:13px;color:var(--dim)
+}
+.demo-note b{color:var(--fg)}
+
+/* -------------------------------------------------------- cards ------- */
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
+.card{
+  border:1px solid var(--border);border-radius:var(--r);background:var(--surface);
+  padding:24px;transition:border-color .18s,transform .18s
+}
+.card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.card .ic{font-size:24px;margin-bottom:13px;display:block}
+.card h3{margin:0 0 9px;font-size:16.5px;letter-spacing:-.3px}
+.card p{margin:0;color:var(--dim);font-size:14.2px}
+.pill{
+  display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;
+  font-weight:700;letter-spacing:.4px;background:var(--surface2);
+  border:1px solid var(--border);color:var(--dim);margin-bottom:11px
+}
+.pill.v{background:rgba(124,92,255,.15);border-color:rgba(124,92,255,.4);color:#b9a6ff}
+.pill.b{background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.4);color:#8fc0ff}
+.pill.c{background:rgba(6,182,212,.15);border-color:rgba(6,182,212,.4);color:#7ee3f5}
+.pill.g{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.4);color:#6ee7b7}
+
+/* ----------------------------------------------------- screenshots ---- */
+.shots{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.shot{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.shot img{width:100%;display:block}
+.shot figcaption{padding:11px 15px;font-size:13px;color:var(--dim);border-top:1px solid var(--border)}
+.shot figcaption b{color:var(--fg);display:block;font-size:13.5px}
+
+/* --------------------------------------------------------- honest ----- */
+.honest{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.hcard{border:1px solid var(--border);border-radius:var(--r);background:var(--surface);padding:22px}
+.hcard h3{margin:0 0 14px;font-size:15.5px;display:flex;align-items:center;gap:9px}
+.hcard.good h3{color:#6ee7b7}
+.hcard.warn h3{color:#fcd34d}
+.hcard ul{margin:0;padding-left:19px;color:var(--dim);font-size:14px}
+.hcard li{margin-bottom:7px}
+.badge{
+  width:21px;height:21px;border-radius:6px;display:grid;place-items:center;
+  font-size:12px;font-weight:800;flex:none
+}
+.hcard.good .badge{background:rgba(16,185,129,.2);color:#6ee7b7}
+.hcard.warn .badge{background:rgba(245,158,11,.2);color:#fcd34d}
+
+/* ---------------------------------------------------------- code ------ */
+pre{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+  padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.75;
+  color:var(--fg2)
+}
+pre .c{color:var(--faint)}
+pre .k{color:#c4a5ff}
+pre .s{color:#7ee3b8}
+
+/* ----------------------------------------------------------- stats ---- */
+.stats{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.stat{border:1px solid var(--border);border-radius:var(--r);background:var(--surface);padding:20px;text-align:center}
+.stat b{display:block;font-size:29px;letter-spacing:-1px;
+  background:linear-gradient(135deg,var(--accent),var(--accent3));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--accent)}
+.stat span{font-size:12.5px;color:var(--dim)}
+
+footer{border-top:1px solid var(--border);padding:36px 0;margin-top:26px;text-align:center;color:var(--faint);font-size:13px}
+footer a{color:var(--dim)}
+footer a:hover{color:var(--accent)}
+
+.reveal{opacity:0;transform:translateY(18px)}
+.reveal.in{opacity:1;transform:none;transition:opacity .6s,transform .6s}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none}
+}
+@media (max-width:640px){
+  .nav-links a:not(.keep){display:none}
+  header{padding:52px 0 34px}
+  section{padding:42px 0}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-in">
+    <a class="brand" href="#top">
+      <svg viewBox="0 0 100 100"><rect width="100" height="100" rx="24" fill="#7c5cff"/><g fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M25 42 50 27l25 15-25 15-25-15Z"/><path d="M33 50v18c0 5 8 9 17 9s17-4 17-9V50"/></g></svg>
+      <span>Campus Nexus<small>LIBRARY &middot; STORE &middot; ARCADE</small></span>
+    </a>
+    <div class="nav-links">
+      <a href="#demo" class="keep">Live demo</a>
+      <a href="#modules">Modules</a>
+      <a href="#security">Security</a>
+      <a href="#run">Run it</a>
+      <a href="https://github.com/Abhijeet-Kumar-Prajapati/Campus-Nexus" target="_blank" rel="noopener noreferrer">Source</a>
+      <button class="theme-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme"></button>
+    </div>
+  </div>
+</nav>
+
+<header id="top">
+  <div class="wrap">
+    <span class="eyebrow"><span class="dot"></span> Built by Abhijeet Kumar Prajapati</span>
+    <h1>Four student projects,<br><span class="grad">rebuilt as one application</span></h1>
+    <p class="lead">
+      A library system, a billing counter and two arcade games that used to be four separate
+      programs with four databases and four logins. They now share one database, one login
+      and one dashboard &mdash; with a security centre that reports its own live posture.
+    </p>
+    <div class="cta">
+      <a class="btn btn-main" href="#demo">&#9654; Open the live demo</a>
+      <a class="btn btn-ghost" href="https://github.com/Abhijeet-Kumar-Prajapati/Campus-Nexus" target="_blank" rel="noopener noreferrer">View the source</a>
+    </div>
+    <p class="meta">Zero runtime dependencies &middot; Node's own <code>node:http</code> and <code>node:sqlite</code> &middot; 165 tests passing</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="stats reveal">
+      <div class="stat"><b>0</b><span>runtime dependencies</span></div>
+      <div class="stat"><b>165</b><span>tests, all passing</span></div>
+      <div class="stat"><b>29</b><span>security controls</span></div>
+      <div class="stat"><b>4</b><span>projects merged</span></div>
+      <div class="stat"><b>20</b><span>SQLite tables</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ demo -->
+<section id="demo">
+  <div class="wrap">
+    <div class="eyebrow reveal">Try it now</div>
+    <h2 class="reveal">The application, running in this page</h2>
+    <p class="sec-lead reveal">
+      This is the real interface &mdash; the same bundle the server hands out &mdash; with its
+      API answered from a snapshot of the demo data so it works without a backend. Sign in,
+      issue a book, ring up a bill, play a round. Everything resets when you close the tab.
+    </p>
+
+    <div class="demo-shell reveal">
+      <div class="demo-top">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span>Campus Nexus &mdash; browser demo</span>
+        <code>/site-demo/demo.html</code>
+      </div>
+      <div class="demo-frame">
+        <div class="demo-cover" id="cover">
+          <div>
+            <h3>Load the application</h3>
+            <p>
+              The demo is the actual bundle plus a browser-side API. It runs locally, so nothing
+              you do here touches a server &mdash; which is also why it is safe to click freely.
+            </p>
+            <button class="btn btn-main" id="loadDemo">&#9654; Start the demo</button>
+          </div>
+        </div>
+        <iframe id="frame" title="Campus Nexus live demo" loading="lazy"
+                src="site-demo/demo.html" hidden></iframe>
+      </div>
+      <div class="demo-note">
+        <b>What is real:</b> the interface, every screen, the navigation, the charts and both
+        arcade games, over a snapshot of the actual seed catalogue.
+        <b>What is not:</b> the server. There is no scrypt, no AES-256-GCM, no hash chain, no
+        rate limiter and no session binding here &mdash; those belong to the Node process, and a
+        page in a browser cannot have them. The Security Centre therefore shows sample posture.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================== modules -->
+<section id="modules">
+  <div class="wrap">
+    <div class="eyebrow reveal">What is inside</div>
+    <h2 class="reveal">Three products and a platform</h2>
+    <p class="sec-lead reveal">
+      The library and the counter were Java Swing over MySQL. Both arcade games were C.
+      All four knew nothing about each other. They share one schema now, and one set of rules.
+    </p>
+    <div class="grid reveal">
+      <div class="card">
+        <span class="pill b">Library</span>
+        <span class="ic">&#128218;</span>
+        <h3>Catalogue, issue and returns</h3>
+        <p>
+          Catalogue with ISBN and shelf, issue and return with due dates, a 15-day loan period,
+          ₹2 per day overdue, reservations, and a fine total that survives the round trip.
+        </p>
+      </div>
+      <div class="card">
+        <span class="pill v">Store</span>
+        <span class="ic">&#128722;</span>
+        <h3>Counter, billing and reports</h3>
+        <p>
+          Point of sale with barcode SKUs, stock that cannot go negative, low-stock alerts, and
+          a bill whose maths is the interesting part: subtotal, then discount, then tax on the
+          reduced amount &mdash; never tax on the original.
+        </p>
+      </div>
+      <div class="card">
+        <span class="pill c">Arcade</span>
+        <span class="ic">&#127918;</span>
+        <h3>Number Guessing and Snake</h3>
+        <p>
+          Both C projects kept their rules and gained difficulty levels. Number Guessing rejects
+          a submit faster than 1.2 seconds; Snake &middot; Water &middot; Gun plays best of
+          three. Both write to one leaderboard.
+        </p>
+      </div>
+      <div class="card">
+        <span class="pill g">Security</span>
+        <span class="ic">&#128737;</span>
+        <h3>The centre, reporting on itself</h3>
+        <p>
+          Twenty-nine controls with live values rather than a static claim, an append-only audit
+          chain sealed outside the database, rate-limit buckets, session state and a threat score.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================== shots -->
+<section id="shots">
+  <div class="wrap">
+    <div class="eyebrow reveal">The screens</div>
+    <h2 class="reveal">Every screen, as it actually looks</h2>
+    <p class="sec-lead reveal">
+      These are not mockups. Each is the running application, signed in, with the demo catalogue
+      loaded &mdash; including the owner&rsquo;s name in the corner.
+    </p>
+    <div class="shots reveal">
+      <figure class="shot" style="margin:0">
+        <img src="site-images/dashboard.png" alt="The dashboard, showing low-stock alerts and live totals across the library, the store and the arcade" loading="lazy" width="1128" height="793">
+        <figcaption><b>Dashboard</b>Alerts, totals and activity read live from all three areas.</figcaption>
+      </figure>
+      <figure class="shot" style="margin:0">
+        <img src="site-images/library.png" alt="The library catalogue listing twenty titles with shelf, copies and availability" loading="lazy" width="1128" height="793">
+        <figcaption><b>Library</b>Catalogue, issue and return, with the utilisation figure computed rather than stored.</figcaption>
+      </figure>
+      <figure class="shot" style="margin:0">
+        <img src="site-images/store.png" alt="The store counter showing product cards, inventory value and reorder alerts" loading="lazy" width="1128" height="793">
+        <figcaption><b>Store</b>Inventory value, bills today and reorder alerts, formatted for rupees.</figcaption>
+      </figure>
+      <figure class="shot" style="margin:0">
+        <img src="site-images/arcade.png" alt="The arcade showing the Number Guessing game with a range and attempts selector" loading="lazy" width="1128" height="793">
+        <figcaption><b>Arcade</b>Number Guessing, with the attempt budget chosen before play.</figcaption>
+      </figure>
+      <figure class="shot" style="margin:0;grid-column:1/-1">
+        <img src="site-images/security.png" alt="The security centre showing threat posture, 29 active controls and the audit chain" loading="lazy" width="1128" height="793">
+        <figcaption><b>Security centre</b>Posture is read from the running process. The critical rating here is real: this instance had just been through the attack suite.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================== security -->
+<section id="security">
+  <div class="wrap">
+    <div class="eyebrow reveal">Security</div>
+    <h2 class="reveal">The part that was actually built</h2>
+    <p class="sec-lead reveal">
+      Most of this is not decoration. These are code paths, and the test suite attacks them on
+      every run.
+    </p>
+    <div class="grid reveal">
+      <div class="card">
+        <span class="ic">&#128273;</span>
+        <h3>scrypt with a pepper outside the database</h3>
+        <p>
+          N = 2<sup>16</sup>, r = 8, p = 2 &mdash; 64 MiB per hash &mdash; then an HMAC pepper held in a
+          key file that is gitignored and never enters the database. Reuse of the last three
+          hashes is refused.
+        </p>
+      </div>
+      <div class="card">
+        <span class="ic">&#128273;</span>
+        <h3>Phone numbers sealed at rest</h3>
+        <p>
+          Borrower contacts and bill phone numbers are stored as AES-256-GCM ciphertext. Exact
+          lookup still works through a deterministic blind index, so ciphertext is never
+          pattern-matched. A test scans the database files for recoverable plaintext.
+        </p>
+      </div>
+      <div class="card">
+        <span class="ic">&#128279;</span>
+        <h3>A tamper-evident audit chain</h3>
+        <p>
+          Every event extends a SHA-256 hash chain with a Merkle root and a proof-of-work nonce.
+          Rewriting history breaks the links, and the chain head is sealed to a file outside the
+          database so a wholesale rewrite is detectable.
+        </p>
+      </div>
+      <div class="card">
+        <span class="ic">&#128274;</span>
+        <h3>Sessions that cannot be replayed</h3>
+        <p>
+          Tokens are split: the store keeps only a public id and SHA-256 of the secret. Sessions
+          bind to IP and User-Agent, idle out after 30 minutes, cap at five per user, and are
+          destroyed by a password change.
+        </p>
+      </div>
+    </div>
+
+    <div class="honest reveal" style="margin-top:16px">
+      <div class="hcard good">
+        <h3><span class="badge">&#10003;</span> Proven by the suite</h3>
+        <ul>
+          <li>165 tests pass on every run &mdash; 45 smoke, 98 security, 22 crypto</li>
+          <li>CSRF, traversal, injection and malformed bodies are each attacked</li>
+          <li>Unknown users pay the full hash cost and get an identical error</li>
+          <li>A failed body never puts a stack trace in a response</li>
+          <li>The database files contain no recoverable plaintext PII</li>
+        </ul>
+      </div>
+      <div class="hcard warn">
+        <h3><span class="badge">!</span> Honest limits</h3>
+        <ul>
+          <li>The in-memory session store does not survive a restart or scale past one process</li>
+          <li>There is no TOTP second factor</li>
+          <li>The ledger seal is a file, not append-only storage</li>
+          <li>The audit chain is not a substitute for real logs shipped to a SIEM</li>
+          <li>Untested against a real attacker with time and a network position</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ run -->
+<section id="run">
+  <div class="wrap">
+    <div class="eyebrow reveal">Run it yourself</div>
+    <h2 class="reveal">Clone, start, done</h2>
+    <p class="sec-lead reveal">
+      There is no <code>npm install</code> step because there are no dependencies. You need
+      Node 22.5 or newer &mdash; <code>node:sqlite</code> does not exist before that.
+    </p>
+<pre><span class="c"># Windows PowerShell</span>
+git clone https://github.com/Abhijeet-Kumar-Prajapati/Campus-Nexus.git
+cd Campus-Nexus
+node server.js            <span class="c"># or double-click start.bat</span>
+
+<span class="c"># macOS / Linux</span>
+git clone https://github.com/Abhijeet-Kumar-Prajapati/Campus-Nexus.git
+cd Campus-Nexus &amp;&amp; node server.js
+
+<span class="c"># it prints the URL and two demo logins:</span>
+<span class="c">#   admin / admin123   staff / staff123</span></pre>
+
+    <div class="honest reveal" style="margin-top:22px">
+      <div class="hcard good">
+        <h3><span class="badge">&#10003;</span> What you get on first run</h3>
+        <ul>
+          <li>20 titles, 25 products and a full bill history, seeded automatically</li>
+          <li>Its own HMAC pepper and data key, generated into a gitignored folder</li>
+          <li>A SQLite file created from the schema in <code>src/schema.sql</code></li>
+          <li>The bundled build already committed, with subresource integrity hashes</li>
+        </ul>
+      </div>
+      <div class="hcard warn">
+        <h3><span class="badge">!</span> Before you expose it</h3>
+        <ul>
+          <li>The demo logins are printed on startup &mdash; change them or delete the accounts</li>
+          <li>Sessions live in memory, so a restart signs everyone out</li>
+          <li><code>SECURITY.md</code> lists every control and what it does not cover</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>
+      <a href="https://github.com/Abhijeet-Kumar-Prajapati/Campus-Nexus" target="_blank" rel="noopener noreferrer">github.com/Abhijeet-Kumar-Prajapati/Campus-Nexus</a>
+      &middot; built by Abhijeet Kumar Prajapati
+    </p>
+    <p style="margin-top:8px">
+      Library, store and arcade in one Node application. Nothing here is a mockup.
+    </p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  const root = document.documentElement;
+  const btn = document.getElementById("themeBtn");
+
+  const paint = () => {
+    const dark = root.getAttribute("data-theme") !== "light";
+    btn.innerHTML = dark
+      ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
+      : '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.3A8.5 8.5 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8Z"/></svg>';
+  };
+  try {
+    const saved = localStorage.getItem("cnx-site-theme");
+    if (saved) root.setAttribute("data-theme", saved);
+  } catch (e) { /* private mode */ }
+  paint();
+  btn.addEventListener("click", () => {
+    const next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("cnx-site-theme", next); } catch (e) { /* ignore */ }
+    paint();
+  });
+
+  /* ---- demo loader ---------------------------------------------------- */
+  const frame = document.getElementById("frame");
+  const cover = document.getElementById("cover");
+  document.getElementById("loadDemo").addEventListener("click", () => {
+    frame.hidden = false;
+    frame.src = "site-demo/demo.html";
+    cover.classList.add("hide");
+  });
+
+  /* ---- scroll reveal -------------------------------------------------- */
+  const items = document.querySelectorAll(".reveal");
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+      }
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.06 });
+    items.forEach((el) => io.observe(el));
+  } else {
+    items.forEach((el) => el.classList.add("in"));
+  }
+})();
+</script>
+</body>
+</html>
